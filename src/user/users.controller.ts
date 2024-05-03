@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
   @Post()
   async createUser(@Body() userData: CreateUserDto, @Res() res) {
@@ -15,7 +15,7 @@ export class UsersController {
       if (!error.status || !error.message) {
         return res.status(500).json({ message: error.detail });
       }
-      return res.status(error.status).json({ message: error.message });
+      return res.status(error.status).json({ message: error.response.errors });
     }
   }
 }
