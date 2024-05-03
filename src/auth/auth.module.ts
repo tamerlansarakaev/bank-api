@@ -9,11 +9,11 @@ import { jwtConstants } from 'src/constants';
   imports: [
     JwtModule.register({
       global: true,
-      secret: jwtConstants.secret
+      secret: jwtConstants.secret,
     }),
-    UsersModule
+    UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService]
+  providers: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}
