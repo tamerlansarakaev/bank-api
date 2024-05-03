@@ -4,8 +4,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './user/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CardModule } from './card/card.module';
-import { User } from './user/user.entity';
+import { CardsModule } from './card/cards.module';
 
 @Module({
   imports: [
@@ -15,14 +14,16 @@ import { User } from './user/user.entity';
       port: 5432,
       password: 'root',
       username: 'postgres',
-      entities: [User],
-      database: 'bank'
+      database: 'bank',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true
+
     }),
     AuthModule,
     UsersModule,
-    CardModule
+    CardsModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

@@ -27,7 +27,7 @@ export class Card {
 
     @Column()
     @IsDate()
-    expiration_date: Date;
+    expirationDate: Date;
 
     @Column()
     @IsNotEmpty()
@@ -50,7 +50,7 @@ export class Card {
     @Column()
     statusMessage: string | null;
 
-    @Column()
+    @Column({ type: 'jsonb', nullable: true })
     transactions: Array<number> | null
 
 }
