@@ -9,7 +9,6 @@ export enum cardStatus {
 @Entity()
 export class Card {
     @PrimaryGeneratedColumn()
-    @Column({ unique: true })
     id: number;
 
     @Column()
