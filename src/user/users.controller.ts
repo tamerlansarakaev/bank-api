@@ -16,8 +16,7 @@ export class UsersController {
       if (!error.status || !error.message) {
         return res.status(500).json({ message: error.detail });
       }
-
-      return res.status(error.status).json({ message: error.message });
+      return res.status(error.status).json({ message: error.response.errors });
     }
   }
 }

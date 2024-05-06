@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { validate } from 'class-validator';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +30,11 @@ export class UsersService {
     user.email = email;
     user.password = hashPassword;
     user.surname = surname;
+    const errors = await validate(user).then((errors) =>
+      errors.map((error) => error.constraints),
+    );
+    if (errors.length) throw new BadRequestException({ errors: errors });
+
     return await this.usersRepository.save(user);
   }
 }
