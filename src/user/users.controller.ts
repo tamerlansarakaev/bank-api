@@ -12,9 +12,11 @@ export class UsersController {
       const createdUser = await this.usersService.createUser(userData);
       return res.status(200).json({ createdUser });
     } catch (error) {
+      console.log(error);
       if (!error.status || !error.message) {
         return res.status(500).json({ message: error.detail });
       }
+
       return res.status(error.status).json({ message: error.message });
     }
   }
