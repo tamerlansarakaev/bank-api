@@ -36,4 +36,14 @@ export class UsersService {
 
     return await this.usersRepository.save(user);
   }
+
+  async getProfile(id) {
+    const userProfile = await this.usersRepository.findOne({ where: { id } });
+    console.log(userProfile);
+    const errors = await validate(id).then((errors) =>
+      errors.map((error) => error.constraints),
+    );
+    if (errors.length) throw new BadRequestException({ errors: errors });
+    return userProfile;
+  }
 }
