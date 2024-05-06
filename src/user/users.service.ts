@@ -10,7 +10,7 @@ import { validate } from 'class-validator';
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async getUserByEmail(email: string) {
     try {
@@ -25,7 +25,6 @@ export class UsersService {
     const user = new User();
 
     const hashPassword = await bcrypt.hash(password, 15);
-
     user.name = name;
     user.email = email;
     user.password = hashPassword;
