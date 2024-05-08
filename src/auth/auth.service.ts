@@ -18,10 +18,25 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
+  async getTokens(id, email) {
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync({ id, email }, { secret: jwtConstants.secret }),
+      this.jwtService.signAsync(
+        { id, email },
+        { secret: jwtConstants.refreshToken, expiresIn: '7d' },
+      ),
+    ]);
+
+    return {
+      access_token: at,
+      refresh_token: rt,
+    };
+  }
+
   async signIn(
     email: string,
     pass: string,
-  ): Promise<{ access_token: string; refreshToken: string }> {
+  ): Promise<{ access_token: string; refresh_token: string }> {
     try {
       const user = await this.usersService.getUserByEmail(email);
       const comparePassword = await bcrypt.compare(pass, user.password);
@@ -31,15 +46,7 @@ export class AuthService {
         throw new UnauthorizedException('Password is incorrect');
       }
 
-      const payload = { id: user.id, email };
-      const payloadRefreshToken = { id: user.id, email };
-      return {
-        access_token: await this.jwtService.signAsync(payload),
-        refreshToken: await this.jwtService.signAsync(payloadRefreshToken, {
-          expiresIn: '7d',
-          secret: jwtConstants.refreshToken,
-        }),
-      };
+      return await this.getTokens(user.id, email);
     } catch (error) {
       throw error;
     }
@@ -50,17 +57,8 @@ export class AuthService {
       const findUser = await this.usersService.getUserByEmail(userData.email);
       if (findUser) throw new BadRequestException('User already exists');
       const user = await this.usersService.createUser(userData);
-      const payload = { id: user.id, email: user.email };
-      const accessToken = await this.jwtService.signAsync(payload);
-      const refreshToken = await this.jwtService.signAsync(payload, {
-        expiresIn: '7d',
-        secret: jwtConstants.refreshToken,
-      });
-      return {
-        ...user,
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      };
+      const tokens = await this.getTokens(user.id, userData.email);
+      return { ...user, ...tokens };
     } catch (error) {
       throw error;
     }

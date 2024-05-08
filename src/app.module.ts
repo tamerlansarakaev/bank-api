@@ -23,11 +23,11 @@ import { AuthGuard } from './guards/auth.guard';
       synchronize: true,
       ssl: true,
     }),
-    AuthModule,
     UsersModule,
     CardsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: AuthGuard }],
 })
-export class AppModule { }
+export class AppModule {}

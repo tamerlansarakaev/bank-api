@@ -27,8 +27,6 @@ export class AuthGuard implements CanActivate {
                 secret: jwtConstants.secret
             })
 
-            if (payload.isRefreshToken) throw new UnauthorizedException()
-
             request['user'] = payload;
         } catch (error) {
             throw new UnauthorizedException()

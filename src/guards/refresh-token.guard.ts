@@ -9,7 +9,6 @@ export class RefreshTokenGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest()
         const token = this.extractTokenFromHeader(request)
-
         if (!token) {
             throw new UnauthorizedException();
         }

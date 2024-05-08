@@ -52,10 +52,5 @@ export class UsersService {
   async getBalance(id) {
     const user = await this.usersRepository.findOne({ where: { id } });
     const cardList = await this.cardService.getCardsUser(user.cardList);
-    let totalMoney =  
-      
-    
-    
-
   }
 }
