@@ -10,7 +10,23 @@ import { jwtConstants } from 'src/constants';
 export class AuthService {
     constructor(private usersService: UsersService, private jwtService: JwtService) { }
 
-    async signIn(email: string, pass: string): Promise<{ access_token: string, refreshToken: string }> {
+    async getTokens(id, email) {
+        const [at, rt] = await Promise.all([
+            this.jwtService.signAsync(
+                { id, email }, { secret: jwtConstants.secret }
+            ),
+            this.jwtService.signAsync(
+                { id, email }, { secret: jwtConstants.refreshToken }
+            )
+        ])
+
+        return {
+            access_token: at,
+            refresh_token: rt
+        }
+    }
+
+    async signIn(email: string, pass: string): Promise<{ access_token: string, refresh_token: string }> {
         try {
             const user = await this.usersService.getUserByEmail(email)
             const comparePassword = await bcrypt.compare(pass, user.password)
@@ -20,12 +36,7 @@ export class AuthService {
                 throw new UnauthorizedException('Password is incorrect')
             }
 
-            const payload = { id: user.id, email }
-            const payloadRefreshToken = { id: user.id, email }
-            return {
-                access_token: await this.jwtService.signAsync(payload),
-                refreshToken: await this.jwtService.signAsync(payloadRefreshToken, { expiresIn: '7d', secret: jwtConstants.refreshToken })
-            }
+            return await this.getTokens(user.id, email)
         } catch (error) {
             throw error
         }
@@ -41,9 +52,11 @@ export class AuthService {
             const refreshToken = await this.jwtService.signAsync(payload, {
                 expiresIn: '7d', secret: jwtConstants.refreshToken
             })
-            return { ...user, access_token: accessToken, refresh_token: refreshToken }
+            const tokens = await this.getTokens(user.id, userData.email)
+            return { ...user, ...tokens }
         } catch (error) {
             throw error
         }
     }
+
 }
