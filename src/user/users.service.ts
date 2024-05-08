@@ -5,11 +5,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { validate } from 'class-validator';
+import { CardsService } from 'src/card/cards.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
+    private readonly cardService: CardsService,
   ) {}
 
   async getUserByEmail(email: string) {
@@ -40,11 +42,12 @@ export class UsersService {
 
   async getProfile(id) {
     const userProfile = await this.usersRepository.findOne({ where: { id } });
+    const cardList = await this.cardService.getCardsUser(userProfile.cardList);
     console.log(userProfile);
     const errors = await validate(id).then((errors) =>
       errors.map((error) => error.constraints),
     );
     if (errors.length) throw new BadRequestException({ errors: errors });
-    return userProfile;
+    return { ...userProfile, cardList: cardList, balance: 5000 };
   }
 }

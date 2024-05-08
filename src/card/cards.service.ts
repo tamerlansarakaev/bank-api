@@ -11,7 +11,7 @@ export class CardsService {
 
   async getCardsUser(cardsId: Array<number>) {
     const cardList: Array<Card> = [];
-    if (!cardsId.length) {
+    if (!cardsId) {
       return null;
     }
     for (const cardId of cardsId) {
