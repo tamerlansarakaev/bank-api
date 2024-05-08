@@ -6,6 +6,8 @@ import { UsersModule } from './user/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CardsModule } from './card/cards.module';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './guards/auth.guard';
 
 @Module({
   imports: [
@@ -26,6 +28,6 @@ import { ConfigModule } from '@nestjs/config';
     CardsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: AuthGuard }],
 })
-export class AppModule {}
+export class AppModule { }
