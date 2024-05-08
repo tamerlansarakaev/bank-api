@@ -21,13 +21,13 @@ export class AuthGuard implements CanActivate {
         if (!token) {
             throw new UnauthorizedException();
         }
+        const refreshPayload = await this.jwtService.verifyAsync(token, { secret: jwtConstants.refreshToken })
+        if (refreshPayload) return true
 
         try {
             const payload = await this.jwtService.verifyAsync(token, {
                 secret: jwtConstants.secret
             })
-
-            if (payload.isRefreshToken) throw new UnauthorizedException()
 
             request['user'] = payload;
         } catch (error) {
