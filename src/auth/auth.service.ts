@@ -47,9 +47,8 @@ export class AuthService {
             const findUser = await this.usersService.getUserByEmail(userData.email)
             if (findUser) throw new BadRequestException('User already exists')
             const user = await this.usersService.createUser(userData)
-            const payload = { id: user.id, email: user.email }
-            
             const tokens = await this.getTokens(user.id, userData.email)
+            
             return { ...user, ...tokens }
         } catch (error) {
             throw error
