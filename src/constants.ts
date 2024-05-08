@@ -1,3 +1,8 @@
 export const jwtConstants = {
-    secret: 'securityKey'
+    secret: 'testToken',
+    refreshToken: 'testRefreshToken'
+}
+
+export const configHash = {
+    hashSalt: 15
 }
