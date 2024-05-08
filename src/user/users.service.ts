@@ -42,11 +42,20 @@ export class UsersService {
   async getProfile(id) {
     const userProfile = await this.usersRepository.findOne({ where: { id } });
     const cardList = await this.cardService.getCardsUser(userProfile.cardList);
-    console.log(userProfile);
     const errors = await validate(id).then((errors) =>
       errors.map((error) => error.constraints),
     );
     if (errors.length) throw new BadRequestException({ errors: errors });
     return { ...userProfile, cardList: cardList, balance: 5000 };
+  }
+
+  async getBalance(id) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    const cardList = await this.cardService.getCardsUser(user.cardList);
+    let totalMoney =  
+      
+    
+    
+
   }
 }
