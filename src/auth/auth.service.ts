@@ -48,10 +48,7 @@ export class AuthService {
             if (findUser) throw new BadRequestException('User already exists')
             const user = await this.usersService.createUser(userData)
             const payload = { id: user.id, email: user.email }
-            const accessToken = await this.jwtService.signAsync(payload)
-            const refreshToken = await this.jwtService.signAsync(payload, {
-                expiresIn: '7d', secret: jwtConstants.refreshToken
-            })
+            
             const tokens = await this.getTokens(user.id, userData.email)
             return { ...user, ...tokens }
         } catch (error) {
