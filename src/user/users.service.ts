@@ -48,4 +48,9 @@ export class UsersService {
     if (errors.length) throw new BadRequestException({ errors: errors });
     return { ...userProfile, cardList: cardList, balance: 5000 };
   }
+
+  async getBalance(id) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    const cardList = await this.cardService.getCardsUser(user.cardList);
+  }
 }
