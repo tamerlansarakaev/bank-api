@@ -16,7 +16,7 @@ export class AuthService {
                 { id, email }, { secret: jwtConstants.secret }
             ),
             this.jwtService.signAsync(
-                { id, email }, { secret: jwtConstants.refreshToken }
+                { id, email }, { secret: jwtConstants.refreshToken, expiresIn: '7d' }
             )
         ])
 
@@ -48,7 +48,6 @@ export class AuthService {
             if (findUser) throw new BadRequestException('User already exists')
             const user = await this.usersService.createUser(userData)
             const tokens = await this.getTokens(user.id, userData.email)
-            
             return { ...user, ...tokens }
         } catch (error) {
             throw error
