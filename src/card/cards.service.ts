@@ -40,7 +40,6 @@ export class CardsService {
     card.cardNumber = cardData.cardNumber.toString();
     card.expirationDate = cardData.expirationDate;
     card.currency = cardData.currency;
-    console.log(card);
     const validationErrors = await validate(card);
     if (validationErrors.length) {
       throw new BadRequestException({ errors: validationErrors });
