@@ -36,10 +36,9 @@ export class Card {
   surname: string;
 
   @Column({ unique: true })
-  @IsInt()
   @IsNotEmpty()
-  @MinLength(8, { message: 'Card Number must have at least 8 digits' })
-  cardNumber: number;
+  @MinLength(16, { message: 'Card Number must have at least 16 digits' })
+  cardNumber: string;
 
   @Column()
   @IsDate()
@@ -47,24 +46,24 @@ export class Card {
 
   @Column()
   @IsNotEmpty()
-  @Length(3, 3)
+  @IsInt()
   cvv: number;
 
   @Column()
   userId: number;
 
-  @Column()
+  @Column({ default: 0 })
   balance: number;
 
-  @Column()
+  @Column({ default: currency.USD })
   currency: string;
 
-  @Column()
+  @Column({ default: cardStatus.ACTIVE })
   status?: cardStatus.ACTIVE | cardStatus.BLOCKED;
 
-  @Column()
+  @Column({ default: '' })
   statusMessage?: string | null;
 
-  @Column({ type: 'jsonb'})
-  transactions?: Array<number> | null;
+  @Column({ type: 'jsonb', default: [] })
+  transactions?: Array<number>;
 }
