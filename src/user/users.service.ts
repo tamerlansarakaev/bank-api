@@ -32,6 +32,7 @@ export class UsersService {
     user.email = email;
     user.password = hashPassword;
     user.surname = surname;
+    user.cardList = [];
     const errors = await validate(user).then((errors) =>
       errors.map((error) => error.constraints),
     );
