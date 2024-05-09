@@ -13,6 +13,11 @@ export enum cardStatus {
   BLOCKED = 'Blocked',
 }
 
+export enum currency {
+  USD = 'USD',
+  EURO = 'EURO',
+}
+
 @Entity()
 export class Card {
   @PrimaryGeneratedColumn()
@@ -21,8 +26,14 @@ export class Card {
   @Column()
   @IsString()
   @IsNotEmpty()
-  @MinLength(5, { message: 'Full Name must have at least 5 characters' })
-  fullName: string;
+  @MinLength(5, { message: 'Name must have at least 5 characters' })
+  name: string;
+
+  @Column()
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(5, { message: 'Surname must have at least 5 characters' })
+  surname: string;
 
   @Column({ unique: true })
   @IsInt()
@@ -46,15 +57,14 @@ export class Card {
   balance: number;
 
   @Column()
-  @IsInt()
   currency: string;
 
   @Column()
-  status: cardStatus.ACTIVE | cardStatus.BLOCKED;
+  status?: cardStatus.ACTIVE | cardStatus.BLOCKED;
 
   @Column()
-  statusMessage: string | null;
+  statusMessage?: string | null;
 
-  @Column({ type: 'jsonb', nullable: true })
-  transactions: Array<number> | null;
+  @Column({ type: 'jsonb'})
+  transactions?: Array<number> | null;
 }
