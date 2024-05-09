@@ -41,6 +41,7 @@ export class CardsService {
     card.expirationDate = cardData.expirationDate;
     card.currency = cardData.currency;
     const validationErrors = await validate(card);
+
     if (validationErrors.length) {
       throw new BadRequestException({ errors: validationErrors });
     }
