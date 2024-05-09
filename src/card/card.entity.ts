@@ -13,6 +13,11 @@ export enum cardStatus {
   BLOCKED = 'Blocked',
 }
 
+export enum currency {
+  USD = 'USD',
+  EURO = 'EURO',
+}
+
 @Entity()
 export class Card {
   @PrimaryGeneratedColumn()
@@ -21,14 +26,19 @@ export class Card {
   @Column()
   @IsString()
   @IsNotEmpty()
-  @MinLength(5, { message: 'Full Name must have at least 5 characters' })
-  fullName: string;
+  @MinLength(5, { message: 'Name must have at least 5 characters' })
+  name: string;
+
+  @Column()
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(5, { message: 'Surname must have at least 5 characters' })
+  surname: string;
 
   @Column({ unique: true })
-  @IsInt()
   @IsNotEmpty()
-  @MinLength(8, { message: 'Card Number must have at least 8 digits' })
-  cardNumber: number;
+  @MinLength(16, { message: 'Card Number must have at least 16 digits' })
+  cardNumber: string;
 
   @Column()
   @IsDate()
@@ -36,25 +46,24 @@ export class Card {
 
   @Column()
   @IsNotEmpty()
-  @Length(3, 3)
+  @IsInt()
   cvv: number;
 
   @Column()
   userId: number;
 
-  @Column()
+  @Column({ default: 0 })
   balance: number;
 
-  @Column()
-  @IsInt()
+  @Column({ default: currency.USD })
   currency: string;
 
-  @Column()
-  status: cardStatus.ACTIVE | cardStatus.BLOCKED;
+  @Column({ default: cardStatus.ACTIVE })
+  status?: cardStatus.ACTIVE | cardStatus.BLOCKED;
 
-  @Column()
-  statusMessage: string | null;
+  @Column({ default: '' })
+  statusMessage?: string | null;
 
-  @Column({ type: 'jsonb', nullable: true })
-  transactions: Array<number> | null;
+  @Column({ type: 'jsonb', default: [] })
+  transactions?: Array<number>;
 }

@@ -32,6 +32,7 @@ export class UsersService {
     user.email = email;
     user.password = hashPassword;
     user.surname = surname;
+    user.cardList = [];
     const errors = await validate(user).then((errors) =>
       errors.map((error) => error.constraints),
     );
@@ -42,11 +43,21 @@ export class UsersService {
   async getProfile(id) {
     const userProfile = await this.usersRepository.findOne({ where: { id } });
     const cardList = await this.cardService.getCardsUser(userProfile.cardList);
-    console.log(userProfile);
+    const totalBalance = await this.getBalance(id);
     const errors = await validate(id).then((errors) =>
       errors.map((error) => error.constraints),
     );
     if (errors.length) throw new BadRequestException({ errors: errors });
-    return { ...userProfile, cardList: cardList, balance: 5000 };
+    return { ...userProfile, cardList: cardList, balance: totalBalance };
+  }
+
+  async getBalance(id) {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    const cards = await this.cardService.getCardsUser(user.cardList);
+    const totalBalance = cards.reduce(
+      (totalBalance, card) => totalBalance + card.balance,
+      0,
+    );
+    return totalBalance;
   }
 }
