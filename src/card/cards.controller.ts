@@ -1,18 +1,23 @@
-import { Controller, Post, Req } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { Card } from './card.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Controller, Inject, Post, Req, forwardRef } from '@nestjs/common';
+import { UsersService } from 'src/user/users.service';
+import { CardsService } from './cards.service';
 
 @Controller('cards')
 export class CardsController {
   constructor(
-    @InjectRepository(Card) private cardRepository: Repository<Card>,
+    @Inject(forwardRef(() => UsersService))
+    private usersService: UsersService,
+    private cardService: CardsService,
   ) {}
 
   @Post()
-  async addCard(@Req() req, userId) {
-    console.log(req.user);
+  async addCard(@Req() req) {
+    try {
+      const { id } = req.user;
+      const createdCard = await this.cardService.addCardByUserId(id);
+      const user = await this.usersService.getProfile(id);
 
-    return true;
+      return user;
+    } catch (error) {}
   }
 }

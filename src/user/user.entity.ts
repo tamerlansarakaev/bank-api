@@ -29,6 +29,6 @@ export class User {
   @MinLength(5, { message: 'Password must have at least 5 characters' })
   password: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'jsonb' })
   cardList: number[];
 }
