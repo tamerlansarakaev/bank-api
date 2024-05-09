@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  Get,
   Inject,
   NotFoundException,
   Post,
@@ -41,6 +42,19 @@ export class CardsController {
     } catch (error) {
       console.log(error);
       return res.status(error.status).json(error.response.errors || error);
+    }
+  }
+
+  @Get()
+  async getCards(@Req() req, @Res() res) {
+    try {
+      const { email } = req.user;
+      const profile = await this.usersService.getUserByEmail(email);
+      const cards = await this.cardService.getCardsUser(profile.cardList);
+
+      return res.status(200).json({ cards: [...cards] });
+    } catch (error) {
+      res.status(error.status || 500).json(error.response.errors || error);
     }
   }
 }
