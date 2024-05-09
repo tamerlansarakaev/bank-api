@@ -7,18 +7,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Card, currency } from './card.entity';
 import { Repository } from 'typeorm';
-import { UsersService } from 'src/user/users.service';
 import { validate } from 'class-validator';
 import { CreateCardDTO } from './dto/create-card.dto';
 
 @Injectable()
 export class CardsService {
   constructor(
-    @Inject(forwardRef(() => UsersService))
-    private usersService: UsersService,
-
-    @InjectRepository(Card)
-    private readonly cardRepository: Repository<Card>,
+    @InjectRepository(Card) private cardRepository: Repository<Card>,
   ) {}
 
   generateRandomNumber(length) {
@@ -27,30 +22,28 @@ export class CardsService {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  async addCardByUserId(userId: number): Promise<Card> {
-    const profile = await this.usersService.getProfile(userId);
-
+  async addCard(userId, name, surname): Promise<Card> {
     const cardData: CreateCardDTO = {
-      name: profile.name,
-      surname: profile.surname,
+      name,
+      surname,
       cvv: this.generateRandomNumber(3),
       cardNumber: this.generateRandomNumber(16),
       userId,
       expirationDate: new Date(new Date().getFullYear() + 3),
       currency: currency.USD,
     };
-
     const card = new Card();
     card.name = cardData.name;
     card.surname = cardData.surname;
     card.cvv = cardData.cvv;
     card.userId = cardData.userId;
+    card.cardNumber = cardData.cardNumber.toString();
     card.expirationDate = cardData.expirationDate;
     card.currency = cardData.currency;
-    const validationErrors = await validate(card); 
-
+    console.log(card);
+    const validationErrors = await validate(card);
     if (validationErrors.length) {
-      throw new BadRequestException({ errors: validationErrors }); 
+      throw new BadRequestException({ errors: validationErrors });
     }
     return await this.cardRepository.save(card);
   }
