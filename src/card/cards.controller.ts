@@ -34,7 +34,8 @@ export class CardsController {
       );
       user.cardList.push(createdCard.id);
       await this.userRepository.save({ ...user });
-      return user;
+      const profile = await this.usersService.getProfile(user.id);
+      return res.status(200).json(profile);
     } catch (error) {
       console.log(error);
       return res.status(error.status).json(error.response.errors || error);
@@ -48,7 +49,7 @@ export class CardsController {
       const profile = await this.usersService.getUserByEmail(email);
       const cards = await this.cardService.getCardsUser(profile.cardList);
 
-      return cards;
+      return res.status(200).json({ cards: [...cards] });
     } catch (error) {
       res.status(error.status || 500).json(error.response.errors || error);
     }
