@@ -47,10 +47,10 @@ export class CardsService {
     card.userId = cardData.userId;
     card.expirationDate = cardData.expirationDate;
     card.currency = cardData.currency;
-    const validationErrors = await validate(card); 
+    const validationErrors = await validate(card);
 
     if (validationErrors.length) {
-      throw new BadRequestException({ errors: validationErrors }); 
+      throw new BadRequestException({ errors: validationErrors });
     }
     return await this.cardRepository.save(card);
   }
