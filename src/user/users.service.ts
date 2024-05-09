@@ -42,7 +42,7 @@ export class UsersService {
   async getProfile(id) {
     const userProfile = await this.usersRepository.findOne({ where: { id } });
     const cardList = await this.cardService.getCardsUser(userProfile.cardList);
-    const errors = await validate(id).then((errors) =>
+    const errors = await validate(userProfile).then((errors) =>
       errors.map((error) => error.constraints),
     );
     if (errors.length) throw new BadRequestException({ errors: errors });
