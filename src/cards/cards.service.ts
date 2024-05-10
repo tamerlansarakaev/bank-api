@@ -23,13 +23,15 @@ export class CardsService {
   }
 
   async addCard(userId, name, surname): Promise<Card> {
+    let currentDate = new Date()
+    currentDate.setFullYear(currentDate.getFullYear() + 5)
     const cardData: CreateCardDTO = {
       name,
       surname,
       cvv: this.generateRandomNumber(3),
       cardNumber: this.generateRandomNumber(16),
       userId,
-      expirationDate: new Date(new Date().getFullYear() + 3),
+      expirationDate: currentDate,
       currency: currency.USD,
     };
     const card = new Card();

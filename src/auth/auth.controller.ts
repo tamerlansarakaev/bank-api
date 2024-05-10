@@ -1,7 +1,17 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { SignInDto } from './dto/signIn.dto';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { Public } from 'src/decorators/public.decorator';
 import { RefreshTokenGuard } from 'src/guards/refresh-token.guard';
 
@@ -42,17 +52,17 @@ export class AuthController {
     }
   }
 
-    @Public()
-    @UseGuards(RefreshTokenGuard)
-    @Get('refresh')
-    async refreshToken(@Req() req, @Res() res) {
-        try {
-            if (!req.user) throw new UnauthorizedException()
-            const { email, id } = req.user
+  @Public()
+  @UseGuards(RefreshTokenGuard)
+  @Get('refresh')
+  async refreshToken(@Req() req, @Res() res) {
+    try {
+      if (!req.user) throw new UnauthorizedException();
+      const { email, id } = req.user;
 
-            return res.status(200).json(await this.authService.getTokens(id, email))
-        } catch (error) {
-            return res.status(error.status).json({ message: error.response.message });
-        }
+      return res.status(200).json(await this.authService.getTokens(id, email));
+    } catch (error) {
+      return res.status(error.status).json({ message: error.response.message });
     }
+  }
 }
