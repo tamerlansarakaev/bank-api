@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { validate } from 'class-validator';
-import { CardsService } from 'src/card/cards.service';
+import { CardsService } from 'src/cards/cards.service';
 import { configHash } from 'src/constants';
 
 @Injectable()

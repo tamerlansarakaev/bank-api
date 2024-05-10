@@ -4,9 +4,9 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UsersService } from 'src/user/users.service';
+import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { SignUpDto } from './dto/signUp.dto';
 import { jwtConstants } from 'src/constants';
