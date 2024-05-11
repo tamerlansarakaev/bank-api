@@ -6,6 +6,8 @@ import {
   Res,
   forwardRef,
   Get,
+  Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UsersService } from 'src/user/users.service';
 import { CardsService } from './cards.service';
@@ -52,6 +54,18 @@ export class CardsController {
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
       res.status(error.status || 500).json(error.response.errors || error);
+    }
+  }
+
+  @Get(':id')
+  async getCard(@Req() req, @Res() res, @Param('id', ParseIntPipe) cardId) {
+    try {
+      const { id, email } = req.user;
+      const card = await this.cardService.getCard(cardId);
+
+      return res.status(200).json(card);
+    } catch (err) {
+      return res.status(500).json();
     }
   }
 }
