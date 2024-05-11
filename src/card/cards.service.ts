@@ -68,8 +68,8 @@ export class CardsService {
     return cardList;
   }
 
-  async getCard(id) {
-    const card = await this.cardRepository.findOne({ where: { id: id } });
+  async getCard(id: number) {
+    const card = await this.cardRepository.findOne({ where: { id } });
     return card;
   }
 }

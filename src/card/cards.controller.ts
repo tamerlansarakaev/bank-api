@@ -58,9 +58,8 @@ export class CardsController {
   }
 
   @Get(':id')
-  async getCard(@Req() req, @Res() res, @Param('id', ParseIntPipe) cardId) {
+  async getCard(@Res() res, @Param('id', ParseIntPipe) cardId: number) {
     try {
-      const { id, email } = req.user;
       const card = await this.cardService.getCard(cardId);
 
       return res.status(200).json(card);
