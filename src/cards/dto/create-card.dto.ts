@@ -1,3 +1,5 @@
+import { Currency } from "../card.entity";
+
 export class CreateCardDTO {
   name: string;
   surname: string;
@@ -5,5 +7,5 @@ export class CreateCardDTO {
   cvv: number;
   userId: number;
   expirationDate: Date;
-  currency: string;
+  currency: Currency;
 }
