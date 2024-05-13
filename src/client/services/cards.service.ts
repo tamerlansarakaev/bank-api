@@ -1,15 +1,9 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  UnauthorizedException,
-  forwardRef,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Card, currency } from './card.entity';
+import { Card, Currency } from '../../entities/card.entity';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
-import { CreateCardDTO } from './dto/create-card.dto';
+import { CreateCardDTO } from '../dto/create-card.dto';
 
 @Injectable()
 export class CardsService {
@@ -24,8 +18,8 @@ export class CardsService {
   }
 
   async addCard(userId, name, surname): Promise<Card> {
-    let currentDate = new Date()
-    currentDate.setFullYear(currentDate.getFullYear() + 5)
+    let currentDate = new Date();
+    currentDate.setFullYear(currentDate.getFullYear() + 5);
     const cardData: CreateCardDTO = {
       name,
       surname,
@@ -33,7 +27,7 @@ export class CardsService {
       cardNumber: this.generateRandomNumber(16),
       userId,
       expirationDate: currentDate,
-      currency: currency.USD,
+      currency: Currency.USD,
     };
     const card = new Card();
     card.name = cardData.name;
@@ -57,7 +51,6 @@ export class CardsService {
     if (!cardsId) {
       return null;
     }
-
     for (const cardId of cardsId) {
       const card = await this.cardRepository.findOne({ where: { id: cardId } });
       if (!card) continue;
@@ -66,7 +59,6 @@ export class CardsService {
     if (!cardList.length) {
       return null;
     }
-
     return cardList;
   }
 
