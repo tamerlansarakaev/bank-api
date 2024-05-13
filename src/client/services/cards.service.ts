@@ -47,7 +47,6 @@ export class CardsService {
 
   async getCardsUser(cardsId: Array<number>) {
     const cardList: Array<Card> = [];
-    console.log(cardsId);
     if (!cardsId) {
       return null;
     }
