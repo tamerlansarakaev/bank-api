@@ -1,18 +1,20 @@
 import {
+  BadRequestException,
   Controller,
+  Get,
   Inject,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
   Post,
   Req,
   Res,
   forwardRef,
-  Get,
-  Param,
-  ParseIntPipe,
 } from '@nestjs/common';
-import { UsersService } from 'src/user/users.service';
+import { UsersService } from 'src/users/users.service';
 import { CardsService } from './cards.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/user/user.entity';
+import { User } from 'src/users/user.entity';
 import { Repository } from 'typeorm';
 
 @Controller('cards')
@@ -28,7 +30,9 @@ export class CardsController {
   async addCard(@Req() req, @Res() res) {
     try {
       const { email } = req.user;
+      if (!email) throw new BadRequestException();
       const user = await this.usersService.getUserByEmail(email);
+      if (!user) throw new NotFoundException('User Not Found');
       const createdCard = await this.cardService.addCard(
         user.id,
         user.name,
@@ -36,8 +40,7 @@ export class CardsController {
       );
       user.cardList.push(createdCard.id);
       await this.userRepository.save({ ...user });
-      const profile = await this.usersService.getProfile(user.id);
-      return res.status(200).json(profile);
+      return res.status(200).json(createdCard);
     } catch (error) {
       console.log(error);
       return res.status(error.status).json(error.response.errors || error);
