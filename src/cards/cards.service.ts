@@ -10,6 +10,7 @@ import { Card, currency } from './card.entity';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
 import { CreateCardDTO } from './dto/create-card.dto';
+import { error } from 'console';
 
 @Injectable()
 export class CardsService {
@@ -24,8 +25,8 @@ export class CardsService {
   }
 
   async addCard(userId, name, surname): Promise<Card> {
-    let currentDate = new Date()
-    currentDate.setFullYear(currentDate.getFullYear() + 5)
+    let currentDate = new Date();
+    currentDate.setFullYear(currentDate.getFullYear() + 5);
     const cardData: CreateCardDTO = {
       name,
       surname,
@@ -70,8 +71,12 @@ export class CardsService {
     return cardList;
   }
 
-  async getCard(id: number) {
+  async getCard(id: number, userId: number) {
     const card = await this.cardRepository.findOne({ where: { id } });
-    return card;
+    if (card.userId === userId) {
+      return card;
+    } else {
+      throw new Error('its not your card');
+    }
   }
 }
