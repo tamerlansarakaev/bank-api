@@ -47,7 +47,6 @@ export class CardsService {
 
   async getCardsUser(cardsId: Array<number>) {
     const cardList: Array<Card> = [];
-    console.log(cardsId);
     if (!cardsId) {
       return null;
     }
@@ -62,8 +61,12 @@ export class CardsService {
     return cardList;
   }
 
-  async getCard(id: number) {
+  async getCard(id: number, userId: number) {
     const card = await this.cardRepository.findOne({ where: { id } });
-    return card;
+    if (card.userId === userId) {
+      return card;
+    } else {
+      throw new Error('its not your card');
+    }
   }
 }
