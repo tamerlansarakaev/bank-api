@@ -1,10 +1,10 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { CardsController } from './cards.controller';
-import { CardsService } from './cards.service';
-import { Card } from './card.entity';
+import { CardsController } from '../controllers/cards.controller';
+import { CardsService } from '../services/cards.service';
+import { Card } from '../../entities/card.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from 'src/users/users.module';
-import { User } from 'src/users/user.entity';
+import { UsersModule } from 'src/client/modules/users.module';
+import { User } from 'src/entities/user.entity';
 
 @Module({
   imports: [

@@ -1,12 +1,9 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Card, Currency } from './card.entity';
+import { Card, Currency } from '../../entities/card.entity';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
-import { CreateCardDTO } from './dto/create-card.dto';
+import { CreateCardDTO } from '../dto/create-card.dto';
 
 @Injectable()
 export class CardsService {

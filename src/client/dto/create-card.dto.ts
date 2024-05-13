@@ -1,4 +1,4 @@
-import { Currency } from "../card.entity";
+import { Currency } from "../../entities/card.entity";
 
 export class CreateCardDTO {
   name: string;
