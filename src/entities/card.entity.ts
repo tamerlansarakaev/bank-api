@@ -13,7 +13,7 @@ export enum cardStatus {
   BLOCKED = 'Blocked',
 }
 
-export enum currency {
+export enum Currency {
   USD = 'USD',
   EURO = 'EURO',
 }
@@ -55,8 +55,8 @@ export class Card {
   @Column({ default: 0 })
   balance: number;
 
-  @Column({ default: currency.USD })
-  currency: string;
+  @Column({ default: Currency.USD })
+  currency: Currency;
 
   @Column({ default: cardStatus.ACTIVE })
   status?: cardStatus.ACTIVE | cardStatus.BLOCKED;

@@ -4,15 +4,17 @@ import {
   Get,
   Inject,
   NotFoundException,
+  Param,
+  ParseIntPipe,
   Post,
   Req,
   Res,
   forwardRef,
 } from '@nestjs/common';
-import { UsersService } from 'src/user/users.service';
-import { CardsService } from './cards.service';
+import { UsersService } from 'src/client/services/users.service';
+import { CardsService } from '../services/cards.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/user/user.entity';
+import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
 
 @Controller('cards')
@@ -55,6 +57,17 @@ export class CardsController {
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
       res.status(error.status || 500).json(error.response.errors || error);
+    }
+  }
+
+  @Get(':id')
+  async getCard(@Res() res, @Param('id', ParseIntPipe) cardId: number) {
+    try {
+      const card = await this.cardService.getCard(cardId);
+
+      return res.status(200).json(card);
+    } catch (err) {
+      return res.status(500).json();
     }
   }
 }
