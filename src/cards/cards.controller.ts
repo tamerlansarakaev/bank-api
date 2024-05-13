@@ -4,6 +4,8 @@ import {
   Get,
   Inject,
   NotFoundException,
+  Param,
+  ParseIntPipe,
   Post,
   Req,
   Res,
@@ -55,6 +57,17 @@ export class CardsController {
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
       res.status(error.status || 500).json(error.response.errors || error);
+    }
+  }
+
+  @Get(':id')
+  async getCard(@Res() res, @Param('id', ParseIntPipe) cardId: number) {
+    try {
+      const card = await this.cardService.getCard(cardId);
+
+      return res.status(200).json(card);
+    } catch (err) {
+      return res.status(500).json();
     }
   }
 }

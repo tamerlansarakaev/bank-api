@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -52,6 +53,7 @@ export class CardsService {
 
   async getCardsUser(cardsId: Array<number>) {
     const cardList: Array<Card> = [];
+    console.log(cardsId);
     if (!cardsId) {
       return null;
     }
@@ -66,5 +68,10 @@ export class CardsService {
     }
 
     return cardList;
+  }
+
+  async getCard(id: number) {
+    const card = await this.cardRepository.findOne({ where: { id } });
+    return card;
   }
 }
