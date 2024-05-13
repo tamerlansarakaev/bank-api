@@ -11,10 +11,10 @@ import {
   Res,
   forwardRef,
 } from '@nestjs/common';
-import { UsersService } from 'src/users/users.service';
-import { CardsService } from './cards.service';
+import { UsersService } from 'src/client/services/users.service';
+import { CardsService } from '../services/cards.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/user.entity';
+import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
 
 @Controller('cards')
