@@ -1,11 +1,11 @@
 import { Controller, Res, Req, Get } from '@nestjs/common';
 import { UserService } from '../services/users.service';
 
-@Controller('client/user')
+@Controller('client/users')
 export class UserController {
   constructor(private UserService: UserService) {}
 
-  @Get()
+  @Get('profile')
   async getProfile(@Req() req, @Res() res) {
     try {
       const { id } = req.user;
