@@ -37,6 +37,7 @@ export class UserService {
       errors.map((error) => error.constraints),
     );
     if (errors.length) throw new BadRequestException({ errors: errors });
+
     return await this.usersRepository.save(user);
   }
 
