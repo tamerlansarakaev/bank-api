@@ -3,7 +3,6 @@ import {
   IsInt,
   IsNotEmpty,
   IsString,
-  Length,
   MinLength,
 } from 'class-validator';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
