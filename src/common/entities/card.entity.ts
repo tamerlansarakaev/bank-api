@@ -25,13 +25,13 @@ export class Card {
   @Column()
   @IsString()
   @IsNotEmpty()
-  @MinLength(5, { message: 'Name must have at least 5 characters' })
+  @MinLength(3, { message: 'Name must have at least 3 characters' })
   name: string;
 
   @Column()
   @IsString()
   @IsNotEmpty()
-  @MinLength(5, { message: 'Surname must have at least 5 characters' })
+  @MinLength(3, { message: 'Surname must have at least 3 characters' })
   surname: string;
 
   @Column({ unique: true })

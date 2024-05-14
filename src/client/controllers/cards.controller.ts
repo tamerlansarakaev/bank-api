@@ -61,13 +61,19 @@ export class CardsController {
   }
 
   @Get(':id')
-  async getCard(@Res() res, @Param('id', ParseIntPipe) cardId: number) {
+  async getCard(
+    @Req() req,
+    @Res() res,
+    @Param('id', ParseIntPipe) cardId: number,
+  ) {
     try {
-      const card = await this.cardService.getCard(cardId);
-
+      const userId = req.user.id;
+      console.log(userId);
+      const card = await this.cardService.getCard(cardId, userId);
       return res.status(200).json(card);
     } catch (err) {
-      return res.status(500).json();
+      console.log(err);
+      return res.status(500).json({ message: err.message });
     }
   }
 }
