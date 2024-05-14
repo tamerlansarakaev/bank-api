@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { jwtConstants } from 'src/common/constants';
-import { IS_PUBLIC_KEY } from 'src/client/decorators/public.decorator';
+import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
 
 @Injectable()
 export class ClientGuard implements CanActivate {

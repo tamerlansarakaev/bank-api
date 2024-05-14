@@ -12,8 +12,8 @@ import {
 import { SignInDto } from '../../common/dto/signIn.dto';
 import { AuthService } from '../services/auth.service';
 import { CreateUserDto } from 'src/common/dto/create-user.dto';
-import { Public } from 'src/client/decorators/public.decorator';
-import { RefreshTokenGuard } from 'src/guards/refresh-token.guard';
+import { Public } from 'src/common/decorators/public.decorator';
+import { RefreshTokenGuard } from 'src/common/guards/refresh-token.guard';
 
 @Controller('client/auth')
 export class AuthController {

@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { ClientGuard } from './guards/client.guard';
+import { ClientGuard } from './common/guards/client.guard';
 import { ClientModule } from './client/modules/client.module';
 
 @Module({
