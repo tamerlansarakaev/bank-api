@@ -1,15 +1,15 @@
 import { Controller, Res, Req, Get } from '@nestjs/common';
-import { UserService } from '../services/users.service';
+import { UsersService } from '../services/users.service';
 
 @Controller('client/users')
 export class UserController {
-  constructor(private UserService: UserService) {}
+  constructor(private UsersService: UsersService) {}
 
   @Get('profile')
   async getProfile(@Req() req, @Res() res) {
     try {
       const { id } = req.user;
-      const getProfile = await this.UserService.getProfile(id);
+      const getProfile = await this.UsersService.getProfile(id);
       return res.status(200).json({ userProfile: getProfile });
     } catch (error) {
       console.log(error);

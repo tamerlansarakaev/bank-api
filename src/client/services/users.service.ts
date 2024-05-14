@@ -9,7 +9,7 @@ import { CardsService } from 'src/client/services/cards.service';
 import { configHash } from 'src/common/constants';
 
 @Injectable()
-export class UserService {
+export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly cardService: CardsService,
