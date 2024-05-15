@@ -30,13 +30,8 @@ export class CardsService {
       currency: Currency.USD,
     };
     const card = new Card();
-    card.name = cardData.name;
-    card.surname = cardData.surname;
-    card.cvv = cardData.cvv;
-    card.userId = cardData.userId;
-    card.cardNumber = cardData.cardNumber.toString();
-    card.expirationDate = cardData.expirationDate;
-    card.currency = cardData.currency;
+    Object.assign(card, cardData);
+
     const validationErrors = await validate(card);
 
     if (validationErrors.length) {

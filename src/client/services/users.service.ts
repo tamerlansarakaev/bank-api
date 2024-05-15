@@ -9,7 +9,7 @@ import { CardsService } from 'src/client/services/cards.service';
 import { configHash } from 'src/common/constants';
 
 @Injectable()
-export class UserService {
+export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly cardService: CardsService,
@@ -26,17 +26,21 @@ export class UserService {
   async createUser(userData: CreateUserDto) {
     const { name, email, password, surname } = userData;
     const user = new User();
-
     const hashPassword = await bcrypt.hash(password, configHash.hashSalt);
-    user.name = name;
-    user.email = email;
-    user.password = hashPassword;
-    user.surname = surname;
+    const userObject: CreateUserDto = {
+      email,
+      name,
+      password: hashPassword,
+      surname,
+    };
+
+    Object.assign(user, userObject);
     user.cardList = [];
     const errors = await validate(user).then((errors) =>
       errors.map((error) => error.constraints),
     );
     if (errors.length) throw new BadRequestException({ errors: errors });
+
     return await this.usersRepository.save(user);
   }
 

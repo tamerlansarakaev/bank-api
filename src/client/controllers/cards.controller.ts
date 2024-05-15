@@ -11,7 +11,7 @@ import {
   Res,
   forwardRef,
 } from '@nestjs/common';
-import { UserService } from 'src/client/services/users.service';
+import { UsersService } from 'src/client/services/users.service';
 import { CardsService } from '../services/cards.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/common/entities/user.entity';
@@ -20,8 +20,8 @@ import { Repository } from 'typeorm';
 @Controller('client/cards')
 export class CardsController {
   constructor(
-    @Inject(forwardRef(() => UserService))
-    private UserService: UserService,
+    @Inject(forwardRef(() => UsersService))
+    private UsersService: UsersService,
     @InjectRepository(User) private userRepository: Repository<User>,
     private cardService: CardsService,
   ) {}
@@ -31,7 +31,7 @@ export class CardsController {
     try {
       const { email } = req.user;
       if (!email) throw new BadRequestException();
-      const user = await this.UserService.getUserByEmail(email);
+      const user = await this.UsersService.getUserByEmail(email);
       if (!user) throw new NotFoundException('User Not Found');
       const createdCard = await this.cardService.addCard(
         user.id,
@@ -51,7 +51,7 @@ export class CardsController {
   async getCards(@Req() req, @Res() res) {
     try {
       const { email } = req.user;
-      const profile = await this.UserService.getUserByEmail(email);
+      const profile = await this.UsersService.getUserByEmail(email);
       const cards = await this.cardService.getCardsUser(profile.cardList);
 
       return res.status(200).json({ cards: [...cards] });
