@@ -60,9 +60,9 @@ export class Card {
   @Column({ default: cardStatus.ACTIVE })
   status?: cardStatus.ACTIVE | cardStatus.BLOCKED;
 
-  @Column({ default: '' })
+  @Column({ nullable: true })
   statusMessage?: string | null;
 
-  @Column({ type: 'jsonb', default: [] })
+  @Column({ type: 'jsonb' })
   transactions?: Array<number>;
 }

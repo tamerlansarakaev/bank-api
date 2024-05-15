@@ -1,6 +1,6 @@
 import { IsDate, IsInt, IsNotEmpty } from 'class-validator';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { Currency } from './card.entity';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Card, Currency } from './card.entity';
 
 export enum TransactionTypes {
   SEND = 'Send',
@@ -11,6 +11,7 @@ export enum TransactionStatuses {
   ACTIVE = 'Active',
   PENDING = 'Pending',
   FINISHED = 'Finished',
+  DENIED = 'Denied',
 }
 
 @Entity()
@@ -27,10 +28,12 @@ export class Transaction {
   currency: Currency;
 
   @Column()
-  @IsInt()
-  cardId: number;
+  senderCardId: number;
 
   @Column()
+  receiverCardId: number;
+
+  @Column({ default: TransactionStatuses.PENDING })
   @IsNotEmpty()
   status: TransactionStatuses;
 
@@ -40,7 +43,7 @@ export class Transaction {
   @Column()
   type: TransactionTypes;
 
-  @Column()
+  @Column({ default: new Date() })
   @IsDate()
   date: Date;
 }
