@@ -1,6 +1,6 @@
 import { IsDate, IsInt, IsNotEmpty } from 'class-validator';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Card, Currency } from './card.entity';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Currency } from './card.entity';
 
 export enum TransactionTypes {
   SEND = 'Send',
