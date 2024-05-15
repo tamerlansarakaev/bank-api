@@ -26,12 +26,15 @@ export class UsersService {
   async createUser(userData: CreateUserDto) {
     const { name, email, password, surname } = userData;
     const user = new User();
-
     const hashPassword = await bcrypt.hash(password, configHash.hashSalt);
-    user.name = name;
-    user.email = email;
-    user.password = hashPassword;
-    user.surname = surname;
+    const userObject: CreateUserDto = {
+      email,
+      name,
+      password: hashPassword,
+      surname,
+    };
+
+    Object.assign(user, userObject);
     user.cardList = [];
     const errors = await validate(user).then((errors) =>
       errors.map((error) => error.constraints),
