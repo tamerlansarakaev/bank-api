@@ -22,6 +22,7 @@ export class CardsController {
   constructor(
     @Inject(forwardRef(() => UsersService))
     private UsersService: UsersService,
+
     @InjectRepository(User) private userRepository: Repository<User>,
     private cardService: CardsService,
   ) {}
@@ -68,8 +69,8 @@ export class CardsController {
   ) {
     try {
       const userId = req.user.id;
-      console.log(userId);
       const card = await this.cardService.getCard(cardId, userId);
+
       return res.status(200).json(card);
     } catch (err) {
       console.log(err);

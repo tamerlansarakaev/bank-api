@@ -2,11 +2,9 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
 import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
-import { Currency } from 'src/common/entities/card.entity';
 import {
   Transaction,
   TransactionStatuses,
-  TransactionTypes,
 } from 'src/common/entities/transaction.entity';
 import { Repository } from 'typeorm';
 
@@ -33,6 +31,7 @@ export class TransactionsService {
       errors.map((error) => error.constraints),
     );
     if (errors.length) throw new BadRequestException(errors);
+
     // Copy transaction data to transaction
     Object.assign(transaction, data);
 

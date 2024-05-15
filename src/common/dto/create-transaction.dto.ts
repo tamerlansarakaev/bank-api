@@ -1,5 +1,8 @@
 import { Currency } from '../entities/card.entity';
-import { TransactionStatuses, TransactionTypes } from '../entities/transaction.entity';
+import {
+  TransactionStatuses,
+  TransactionTypes,
+} from '../entities/transaction.entity';
 
 export class CreateTransactionDto {
   readonly receiverCardId: number;
