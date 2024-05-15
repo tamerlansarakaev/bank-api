@@ -32,9 +32,9 @@ export class CardsService {
     const card = new Card();
     card.name = cardData.name;
     card.surname = cardData.surname;
+    card.cardNumber = cardData.cardNumber.toString();
     card.cvv = cardData.cvv;
     card.userId = cardData.userId;
-    card.cardNumber = cardData.cardNumber.toString();
     card.expirationDate = cardData.expirationDate;
     card.currency = cardData.currency;
     const validationErrors = await validate(card);
