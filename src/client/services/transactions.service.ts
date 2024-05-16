@@ -18,8 +18,8 @@ export class TransactionsService {
   async createTransaction(transactionData: CreateTransactionDto) {
     const data: CreateTransactionDto = {
       amount: transactionData.amount,
-      receiverCardId: transactionData.receiverCardId,
-      senderCardId: transactionData.senderCardId || null,
+      receiverCardNumber: transactionData.receiverCardNumber,
+      senderCardNumber: transactionData.senderCardNumber || null,
       currency: transactionData.currency,
       type: transactionData.type,
       status: transactionData.status || TransactionStatuses.PENDING,

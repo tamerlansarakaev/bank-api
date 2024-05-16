@@ -1,14 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Card, Currency } from '../../common/entities/card.entity';
-import { Repository } from 'typeorm';
+import { Repository, Transaction } from 'typeorm';
 import { validate } from 'class-validator';
 import { CreateCardDTO } from '../../common/dto/create-card.dto';
+import { TransactionsService } from './transactions.service';
+import {
+  TransactionStatuses,
+  TransactionTypes,
+} from 'src/common/entities/transaction.entity';
 
 @Injectable()
 export class CardsService {
   constructor(
     @InjectRepository(Card) private cardRepository: Repository<Card>,
+    private transactionsService: TransactionsService,
   ) {}
 
   generateRandomNumber(length) {
@@ -40,7 +46,7 @@ export class CardsService {
     return await this.cardRepository.save(card);
   }
 
-  async getCardsUser(cardsId: Array<number>) {
+  async getCards(cardsId: Array<number>) {
     const cardList: Array<Card> = [];
     if (!cardsId) {
       return null;
@@ -63,5 +69,44 @@ export class CardsService {
     } else {
       throw new Error('its not your card');
     }
+  }
+
+  async verifyCardOwnership(userId, cardId): Promise<boolean> {
+    const card = await this.getCard(cardId, userId);
+    if (!card) return false;
+    return true;
+  }
+
+  async sendMoneyByCardsId(
+    userId: number,
+    amount: number,
+    senderCardId: number,
+    receiverCardId: number,
+    currency: Currency,
+  ) {
+    if (!senderCardId)
+      throw new BadRequestException({ message: "SenderCardId can't be empty" });
+
+    const validate = await this.verifyCardOwnership(userId, senderCardId);
+
+    if (!validate)
+      throw new BadRequestException({ message: "It isn't your card" });
+
+    const [senderCard, receiverCard] = await this.getCards([
+      senderCardId,
+      receiverCardId,
+    ]);
+
+    const transaction = await this.transactionsService.createTransaction({
+      amount,
+      senderCardNumber: senderCard.cardNumber,
+      receiverCardNumber: receiverCard.cardNumber,
+      type: TransactionTypes.SEND,
+      currency,
+      status: TransactionStatuses.PENDING,
+    });
+    senderCard.transactions.push(transaction.id);
+
+    return transaction;
   }
 }
