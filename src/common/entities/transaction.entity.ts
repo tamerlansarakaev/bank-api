@@ -11,6 +11,7 @@ export enum TransactionStatuses {
   ACTIVE = 'Active',
   PENDING = 'Pending',
   FINISHED = 'Finished',
+  DENIED = 'Denied',
 }
 
 @Entity()
@@ -27,10 +28,12 @@ export class Transaction {
   currency: Currency;
 
   @Column()
-  @IsInt()
-  cardId: number;
+  senderCardNumber: string;
 
   @Column()
+  receiverCardNumber: string;
+
+  @Column({ default: TransactionStatuses.PENDING })
   @IsNotEmpty()
   status: TransactionStatuses;
 
@@ -40,7 +43,7 @@ export class Transaction {
   @Column()
   type: TransactionTypes;
 
-  @Column()
+  @Column({ default: new Date() })
   @IsDate()
   date: Date;
 }

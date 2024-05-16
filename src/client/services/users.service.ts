@@ -26,12 +26,15 @@ export class UsersService {
   async createUser(userData: CreateUserDto) {
     const { name, email, password, surname } = userData;
     const user = new User();
-
     const hashPassword = await bcrypt.hash(password, configHash.hashSalt);
-    user.name = name;
-    user.email = email;
-    user.password = hashPassword;
-    user.surname = surname;
+    const userObject: CreateUserDto = {
+      email,
+      name,
+      password: hashPassword,
+      surname,
+    };
+
+    Object.assign(user, userObject);
     user.cardList = [];
     const errors = await validate(user).then((errors) =>
       errors.map((error) => error.constraints),
@@ -43,7 +46,7 @@ export class UsersService {
 
   async getProfile(id) {
     const userProfile = await this.usersRepository.findOne({ where: { id } });
-    const cardList = await this.cardService.getCardsUser(userProfile.cardList);
+    const cardList = await this.cardService.getCards(userProfile.cardList);
     const totalBalance = await this.getBalance(id);
     const errors = await validate(id).then((errors) =>
       errors.map((error) => error.constraints),
@@ -54,7 +57,7 @@ export class UsersService {
 
   async getBalance(id) {
     const user = await this.usersRepository.findOne({ where: { id } });
-    const cards = await this.cardService.getCardsUser(user.cardList);
+    const cards = await this.cardService.getCards(user.cardList);
     const totalBalance = cards.reduce(
       (totalBalance, card) => totalBalance + card.balance,
       0,

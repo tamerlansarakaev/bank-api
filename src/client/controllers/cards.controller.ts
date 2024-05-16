@@ -21,7 +21,8 @@ import { Repository } from 'typeorm';
 export class CardsController {
   constructor(
     @Inject(forwardRef(() => UsersService))
-    private UsersService: UsersService,
+    private usersService: UsersService,
+
     @InjectRepository(User) private userRepository: Repository<User>,
     private cardsService: CardsService,
   ) {}
@@ -31,7 +32,7 @@ export class CardsController {
     try {
       const { email } = req.user;
       if (!email) throw new BadRequestException();
-      const user = await this.UsersService.getUserByEmail(email);
+      const user = await this.usersService.getUserByEmail(email);
       if (!user) throw new NotFoundException('User Not Found');
       const createdCard = await this.cardsService.addCard(
         user.id,
@@ -51,8 +52,8 @@ export class CardsController {
   async getCards(@Req() req, @Res() res) {
     try {
       const { email } = req.user;
-      const profile = await this.UsersService.getUserByEmail(email);
-      const cards = await this.cardsService.getCardsUser(profile.cardList);
+      const profile = await this.usersService.getUserByEmail(email);
+      const cards = await this.cardsService.getCards(profile.cardList);
 
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
@@ -68,8 +69,8 @@ export class CardsController {
   ) {
     try {
       const userId = req.user.id;
-      console.log(userId);
       const card = await this.cardsService.getCard(cardId, userId);
+
       return res.status(200).json(card);
     } catch (err) {
       console.log(err);

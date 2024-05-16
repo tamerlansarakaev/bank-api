@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { validate } from 'class-validator';
+import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
 import {
   Transaction,
-  TransactionTypes,
+  TransactionStatuses,
 } from 'src/common/entities/transaction.entity';
 import { Repository } from 'typeorm';
 
@@ -10,14 +12,29 @@ import { Repository } from 'typeorm';
 export class TransactionsService {
   constructor(
     @InjectRepository(Transaction)
-    transactionRepository: Repository<Transaction>,
+    private transactionRepository: Repository<Transaction>,
   ) {}
 
-  async createTransaction(
-    cardId: number,
-    type: TransactionTypes.SEND | TransactionTypes.DEPOSIT,
-  ) {
-    switch (type) {
-    }
+  async createTransaction(transactionData: CreateTransactionDto) {
+    const data: CreateTransactionDto = {
+      amount: transactionData.amount,
+      receiverCardNumber: transactionData.receiverCardNumber,
+      senderCardNumber: transactionData.senderCardNumber || null,
+      currency: transactionData.currency,
+      type: transactionData.type,
+      status: transactionData.status || TransactionStatuses.PENDING,
+    };
+
+    // Create transaction
+    const transaction = new Transaction();
+    const errors = await validate(transaction).then((errors) =>
+      errors.map((error) => error.constraints),
+    );
+    if (errors.length) throw new BadRequestException(errors);
+
+    // Copy transaction data to transaction
+    Object.assign(transaction, data);
+
+    return await this.transactionRepository.create(transaction);
   }
 }
