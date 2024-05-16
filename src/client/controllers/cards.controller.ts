@@ -53,7 +53,7 @@ export class CardsController {
     try {
       const { email } = req.user;
       const profile = await this.UsersService.getUserByEmail(email);
-      const cards = await this.cardService.getCardsUser(profile.cardList);
+      const cards = await this.cardService.getCards(profile.cardList);
 
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {

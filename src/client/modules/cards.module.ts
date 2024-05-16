@@ -5,9 +5,11 @@ import { Card } from '../../common/entities/card.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/client/modules/users.module';
 import { User } from 'src/common/entities/user.entity';
+import { TransactionsModule } from './transactions.module';
 
 @Module({
   imports: [
+    TransactionsModule,
     forwardRef(() => UsersModule),
     TypeOrmModule.forFeature([Card]),
     TypeOrmModule.forFeature([User]),

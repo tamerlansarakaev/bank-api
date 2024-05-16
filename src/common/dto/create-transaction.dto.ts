@@ -5,8 +5,8 @@ import {
 } from '../entities/transaction.entity';
 
 export class CreateTransactionDto {
-  readonly receiverCardId: number;
-  readonly senderCardId?: number;
+  readonly receiverCardNumber: string;
+  readonly senderCardNumber?: string;
   readonly amount: number;
   readonly currency: Currency;
   readonly status?: TransactionStatuses;

@@ -46,7 +46,7 @@ export class UsersService {
 
   async getProfile(id) {
     const userProfile = await this.usersRepository.findOne({ where: { id } });
-    const cardList = await this.cardService.getCardsUser(userProfile.cardList);
+    const cardList = await this.cardService.getCards(userProfile.cardList);
     const totalBalance = await this.getBalance(id);
     const errors = await validate(id).then((errors) =>
       errors.map((error) => error.constraints),
@@ -57,7 +57,7 @@ export class UsersService {
 
   async getBalance(id) {
     const user = await this.usersRepository.findOne({ where: { id } });
-    const cards = await this.cardService.getCardsUser(user.cardList);
+    const cards = await this.cardService.getCards(user.cardList);
     const totalBalance = cards.reduce(
       (totalBalance, card) => totalBalance + card.balance,
       0,
