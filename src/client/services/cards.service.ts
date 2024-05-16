@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Card, Currency } from '../../common/entities/card.entity';
-import { Repository, Transaction } from 'typeorm';
+import { Transaction } from '../../common/entities/transaction.entity';
+import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
 import { CreateCardDTO } from '../../common/dto/create-card.dto';
 import { TransactionsService } from './transactions.service';
@@ -14,6 +15,8 @@ import {
 export class CardsService {
   constructor(
     @InjectRepository(Card) private cardRepository: Repository<Card>,
+    @InjectRepository(Transaction)
+    private transactionRepository: Repository<Transaction>,
     private transactionsService: TransactionsService,
   ) {}
 
@@ -71,6 +74,13 @@ export class CardsService {
     }
   }
 
+  async getCardTransactions(cardId: number) {
+    const transactions = this.transactionRepository.find({
+      where: { cardId },
+    });
+
+    return transactions;
+  }
   async verifyCardOwnership(userId, cardId): Promise<boolean> {
     const card = await this.getCard(cardId, userId);
     if (!card) return false;

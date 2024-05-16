@@ -21,10 +21,10 @@ import { Repository } from 'typeorm';
 export class CardsController {
   constructor(
     @Inject(forwardRef(() => UsersService))
-    private UsersService: UsersService,
+    private usersService: UsersService,
 
     @InjectRepository(User) private userRepository: Repository<User>,
-    private cardService: CardsService,
+    private cardsService: CardsService,
   ) {}
 
   @Post()
@@ -32,9 +32,9 @@ export class CardsController {
     try {
       const { email } = req.user;
       if (!email) throw new BadRequestException();
-      const user = await this.UsersService.getUserByEmail(email);
+      const user = await this.usersService.getUserByEmail(email);
       if (!user) throw new NotFoundException('User Not Found');
-      const createdCard = await this.cardService.addCard(
+      const createdCard = await this.cardsService.addCard(
         user.id,
         user.name,
         user.surname,
@@ -52,8 +52,8 @@ export class CardsController {
   async getCards(@Req() req, @Res() res) {
     try {
       const { email } = req.user;
-      const profile = await this.UsersService.getUserByEmail(email);
-      const cards = await this.cardService.getCards(profile.cardList);
+      const profile = await this.usersService.getUserByEmail(email);
+      const cards = await this.cardsService.getCards(profile.cardList);
 
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
@@ -69,12 +69,27 @@ export class CardsController {
   ) {
     try {
       const userId = req.user.id;
-      const card = await this.cardService.getCard(cardId, userId);
+      const card = await this.cardsService.getCard(cardId, userId);
 
       return res.status(200).json(card);
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: err.message });
+    }
+  }
+
+  @Get(':id/transactions')
+  async getTransactions(
+    @Param('id', ParseIntPipe) cardId: number,
+    @Req() req,
+    @Res() res,
+  ) {
+    try {
+      const transactions = await this.cardsService.getCardTransactions(cardId);
+
+      return res.status(200).json({ transactions: [...transactions] });
+    } catch (err) {
+      return res.status(500).json(err);
     }
   }
 }
