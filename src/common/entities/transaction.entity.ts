@@ -28,10 +28,10 @@ export class Transaction {
   currency: Currency;
 
   @Column()
-  senderCardId: number;
+  senderCardNumber: string;
 
   @Column()
-  receiverCardId: number;
+  receiverCardNumber: string;
 
   @Column({ default: TransactionStatuses.PENDING })
   @IsNotEmpty()
