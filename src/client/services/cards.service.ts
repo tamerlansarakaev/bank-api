@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Card, Currency } from '../../common/entities/card.entity';
+import { Transaction } from '../../common/entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
 import { CreateCardDTO } from '../../common/dto/create-card.dto';
@@ -9,6 +10,8 @@ import { CreateCardDTO } from '../../common/dto/create-card.dto';
 export class CardsService {
   constructor(
     @InjectRepository(Card) private cardRepository: Repository<Card>,
+    @InjectRepository(Transaction)
+    private transactionRepository: Repository<Transaction>,
   ) {}
 
   generateRandomNumber(length) {
@@ -68,5 +71,13 @@ export class CardsService {
     } else {
       throw new Error('its not your card');
     }
+  }
+
+  async getCardTransactions(cardId: number) {
+    const transactions = this.transactionRepository.find({
+      where: { cardId },
+    });
+
+    return transactions;
   }
 }
