@@ -77,13 +77,15 @@ export class CardsService {
     }
   }
 
-  // async getCardTransactions(cardId: number) {
-  //   const transactions = this.transactionRepository.find({
-  //     where: { cardId },
-  //   });
+  async getCardTransactions(cardId: number) {
+    const card = await this.cardRepository.findOne({ where: { id: cardId } });
+    const transactions = card.transactions;
+    const resultTransaction = transactions.map(
+      async (id) => await this.transactionRepository.find({ where: { id } }),
+    );
+    return resultTransaction;
+  }
 
-  //   return transactions;
-  // }
   async verifyCardOwnership(userId, cardId): Promise<boolean> {
     const card = await this.getCard(cardId, userId);
     if (!card) return false;
