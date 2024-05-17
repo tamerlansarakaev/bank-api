@@ -23,18 +23,20 @@ export class TransactionsService {
       currency: transactionData.currency,
       type: transactionData.type,
       status: transactionData.status || TransactionStatuses.PENDING,
+      date: new Date(),
     };
 
     // Create transaction
     const transaction = new Transaction();
+
+    // Copy transaction data to transaction
+    Object.assign(transaction, data);
+
     const errors = await validate(transaction).then((errors) =>
       errors.map((error) => error.constraints),
     );
     if (errors.length) throw new BadRequestException(errors);
 
-    // Copy transaction data to transaction
-    Object.assign(transaction, data);
-
-    return await this.transactionRepository.create(transaction);
+    return await this.transactionRepository.save(transaction);
   }
 }

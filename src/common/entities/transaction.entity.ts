@@ -37,8 +37,8 @@ export class Transaction {
   @IsNotEmpty()
   status: TransactionStatuses;
 
-  @Column()
-  statusMessage: string;
+  @Column({ default: null })
+  statusMessage: string | null;
 
   @Column()
   type: TransactionTypes;

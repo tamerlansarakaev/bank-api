@@ -39,9 +39,12 @@ export class AuthService {
   ): Promise<{ access_token: string; refresh_token: string }> {
     try {
       const user = await this.UsersService.getUserByEmail(email);
-      const comparePassword = await bcrypt.compare(pass, user.password);
-      if (!user) throw new NotFoundException();
+      if (!user)
+        throw new NotFoundException({
+          message: `User with Email: ${email} not found`,
+        });
 
+      const comparePassword = await bcrypt.compare(pass, user.password);
       if (!comparePassword) {
         throw new UnauthorizedException('Password is incorrect');
       }

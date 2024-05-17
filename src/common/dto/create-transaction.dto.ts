@@ -12,4 +12,5 @@ export class CreateTransactionDto {
   readonly status?: TransactionStatuses;
   readonly statusMessage?: string;
   readonly type: TransactionTypes;
+  readonly date?: Date;
 }

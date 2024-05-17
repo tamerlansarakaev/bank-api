@@ -63,6 +63,6 @@ export class Card {
   @Column({ nullable: true })
   statusMessage?: string | null;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'jsonb', default: [] })
   transactions?: Array<number>;
 }
