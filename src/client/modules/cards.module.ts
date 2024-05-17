@@ -5,14 +5,14 @@ import { Card } from '../../common/entities/card.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from 'src/client/modules/users.module';
 import { User } from 'src/common/entities/user.entity';
+import { Transaction } from 'src/common/entities/transaction.entity';
 import { TransactionsModule } from './transactions.module';
 
 @Module({
   imports: [
     TransactionsModule,
     forwardRef(() => UsersModule),
-    TypeOrmModule.forFeature([Card]),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([Card, User, Transaction]),
   ],
   controllers: [CardsController],
   providers: [CardsService],
