@@ -75,12 +75,14 @@ export class CardsService {
   }
 
   async getCardTransactions(cardId: number) {
-    const transactions = this.transactionRepository.find({
-      where: { cardId },
-    });
-
-    return transactions;
+    const card = await this.cardRepository.findOne({ where: { id: cardId } });
+    const transactions = card.transactions;
+    const resultTransaction = transactions.map(
+      async (id) => await this.transactionRepository.find({ where: { id } }),
+    );
+    return resultTransaction;
   }
+
   async verifyCardOwnership(userId, cardId): Promise<boolean> {
     const card = await this.getCard(cardId, userId);
     if (!card) return false;
