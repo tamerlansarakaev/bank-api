@@ -112,18 +112,18 @@ export class CardsController {
   }
 
   async validateCurrency(currency: Currency) {}
-  @Get(':id/transactions')
-  async getTransactions(
-    @Param('id', ParseIntPipe) cardId: number,
-    @Req() req,
-    @Res() res,
-  ) {
-    try {
-      const transactions = await this.cardsService.getCardTransactions(cardId);
+  // @Get(':id/transactions')
+  // async getTransactions(
+  //   @Param('id', ParseIntPipe) cardId: number,
+  //   @Req() req,
+  //   @Res() res,
+  // ) {
+  //   try {
+  //     const transactions = await this.cardsService.getCardTransactions(cardId);
 
-      return res.status(200).json({ transactions: [...transactions] });
-    } catch (err) {
-      return res.status(500).json(err);
-    }
-  }
+  //     return res.status(200).json({ transactions: [...transactions] });
+  //   } catch (err) {
+  //     return res.status(500).json(err);
+  //   }
+  // }
 }
