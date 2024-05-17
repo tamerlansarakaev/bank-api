@@ -9,6 +9,7 @@ import {
   TransactionStatuses,
   TransactionTypes,
 } from 'src/common/entities/transaction.entity';
+import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
 
 @Injectable()
 export class CardsService {
@@ -30,7 +31,7 @@ export class CardsService {
       name,
       surname,
       cvv: this.generateRandomNumber(3),
-      cardNumber: this.generateRandomNumber(16),
+      cardNumber: this.generateRandomNumber(16).toString(),
       userId,
       expirationDate: currentDate,
       currency: Currency.USD,
@@ -38,7 +39,9 @@ export class CardsService {
     const card = new Card();
     Object.assign(card, cardData);
 
-    const validationErrors = await validate(card);
+    const validationErrors = await validate(card).then((errors) =>
+      errors.map((error) => error.constraints),
+    );
 
     if (validationErrors.length) {
       throw new BadRequestException({ errors: validationErrors });
@@ -96,6 +99,10 @@ export class CardsService {
       senderCardId,
       receiverCardId,
     ]);
+    if (senderCard.balance - amount < 0)
+      throw new Error('Not enought money on card');
+    senderCard.balance = senderCard.balance - amount;
+    console.log(senderCard.balance);
 
     const transaction = await this.transactionsService.createTransaction({
       amount,
@@ -105,8 +112,23 @@ export class CardsService {
       currency,
       status: TransactionStatuses.PENDING,
     });
+
+    if (!transaction) return;
+    // Add transaction id to card
     senderCard.transactions.push(transaction.id);
 
+    await this.cardRepository.save(senderCard);
     return transaction;
+  }
+
+  async confirmSendTransaction(transaction: CreateTransactionDto) {
+    const randomTimeForTimeout = Math.floor(
+      Math.random() * (10000 - 5000) + 5000,
+    );
+    console.log(randomTimeForTimeout);
+    setTimeout(() => {
+      console.log(transaction);
+      console.log(1111);
+    }, randomTimeForTimeout);
   }
 }
