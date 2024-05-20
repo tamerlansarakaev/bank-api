@@ -136,7 +136,10 @@ export class CardsService {
       receiverCard.currency,
     ]);
 
-    if(!currenciesValidate) throw new BadRequestException({message: "Card currencies are different "})
+    if (!currenciesValidate)
+      throw new BadRequestException({
+        message: 'Card currencies are different ',
+      });
 
     senderCard.balance = senderCard.balance - amount;
     const transaction = await this.transactionsService.createTransaction({
@@ -149,7 +152,7 @@ export class CardsService {
     });
 
     if (!transaction) return;
-    // Add transaction id to card
+    // Add transaction to card
     senderCard.transactions.push(transaction.id);
 
     await this.cardRepository.save(senderCard);

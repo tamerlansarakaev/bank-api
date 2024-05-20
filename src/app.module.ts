@@ -3,9 +3,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
-import { ClientGuard } from './common/guards/client.guard';
 import { ClientModule } from './client/modules/client.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -22,8 +21,9 @@ import { ClientModule } from './client/modules/client.module';
       ssl: true,
     }),
     ClientModule,
+    AdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ClientGuard }],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -17,7 +17,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
-import { Currency } from 'src/common/entities/card.entity';
 
 @Controller('client/cards')
 export class CardsController {
