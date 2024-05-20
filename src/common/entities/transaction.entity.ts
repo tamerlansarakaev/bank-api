@@ -10,7 +10,7 @@ export enum TransactionTypes {
 export enum TransactionStatuses {
   ACTIVE = 'Active',
   PENDING = 'Pending',
-  FINISHED = 'Finished',
+  COMPLETED = 'Completed',
   DENIED = 'Denied',
 }
 

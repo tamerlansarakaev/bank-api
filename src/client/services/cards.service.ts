@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Card, Currency } from '../../common/entities/card.entity';
 import { Transaction } from '../../common/entities/transaction.entity';
@@ -10,7 +14,6 @@ import {
   TransactionStatuses,
   TransactionTypes,
 } from 'src/common/entities/transaction.entity';
-import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
 
 @Injectable()
 export class CardsService {
@@ -52,7 +55,7 @@ export class CardsService {
     return await this.cardRepository.save(card);
   }
 
-  async getCards(cardsId: Array<number>) {
+  async getCardsByCardId(cardsId: Array<number>) {
     const cardList: Array<Card> = [];
     if (!cardsId) {
       return null;
@@ -86,6 +89,16 @@ export class CardsService {
     return resultTransaction;
   }
 
+  async getCardByCardNumber(
+    cardNumber: string,
+    userId: number,
+  ): Promise<Card | null> {
+    const card = await this.cardRepository.findOne({
+      where: { cardNumber, userId },
+    });
+    return card || null;
+  }
+
   async verifyCardOwnership(userId, cardId): Promise<boolean> {
     const card = await this.getCard(cardId, userId);
     if (!card) return false;
@@ -96,7 +109,7 @@ export class CardsService {
     userId: number,
     amount: number,
     senderCardId: number,
-    receiverCardId: number,
+    receiverCardNumber: string,
     currency: Currency,
   ) {
     if (!senderCardId)
@@ -107,15 +120,25 @@ export class CardsService {
     if (!validate)
       throw new BadRequestException({ message: "It isn't your card" });
 
-    const [senderCard, receiverCard] = await this.getCards([
-      senderCardId,
-      receiverCardId,
-    ]);
+    const senderCard = await this.getCard(senderCardId, userId);
+    const receiverCard = await this.getCardByCardNumber(
+      receiverCardNumber,
+      userId,
+    );
+
+    if (!receiverCard)
+      throw new NotFoundException({ message: 'Receiver Card not found' });
     if (senderCard.balance - amount < 0)
       throw new Error('Not enought money on card');
-    senderCard.balance = senderCard.balance - amount;
-    console.log(senderCard.balance);
 
+    const currenciesValidate = this.validateCurrency([
+      senderCard.currency,
+      receiverCard.currency,
+    ]);
+
+    if(!currenciesValidate) throw new BadRequestException({message: "Card currencies are different "})
+
+    senderCard.balance = senderCard.balance - amount;
     const transaction = await this.transactionsService.createTransaction({
       amount,
       senderCardNumber: senderCard.cardNumber,
@@ -133,14 +156,31 @@ export class CardsService {
     return transaction;
   }
 
-  async confirmSendTransaction(transaction: CreateTransactionDto) {
+  async confirmSendTransaction(transaction: Transaction) {
     const randomTimeForTimeout = Math.floor(
       Math.random() * (10000 - 5000) + 5000,
     );
-    console.log(randomTimeForTimeout);
-    setTimeout(() => {
-      console.log(transaction);
-      console.log(1111);
+    const receiverCard = await this.cardRepository.findOne({
+      where: { cardNumber: transaction.receiverCardNumber },
+    });
+    setTimeout(async () => {
+      receiverCard.balance = receiverCard.balance + transaction.amount;
+      receiverCard.transactions.push(transaction.id);
+      await this.transactionsService.setStatusTransaction(
+        transaction.id,
+        TransactionStatuses.COMPLETED,
+      );
+      await this.cardRepository.save(receiverCard);
     }, randomTimeForTimeout);
+  }
+
+  async validateCurrency(currency: Currency[]) {
+    let status = true;
+    currency.map((el, i) => {
+      if (el !== currency[i]) {
+        status = false;
+      }
+    });
+    return status;
   }
 }

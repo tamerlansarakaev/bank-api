@@ -39,4 +39,16 @@ export class TransactionsService {
 
     return await this.transactionRepository.save(transaction);
   }
+
+  async setStatusTransaction(
+    transactionId: number,
+    status: TransactionStatuses,
+  ) {
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: transactionId },
+    });
+    transaction.status = status;
+
+    return await this.transactionRepository.save(transaction);
+  }
 }

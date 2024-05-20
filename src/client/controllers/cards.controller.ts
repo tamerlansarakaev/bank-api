@@ -56,7 +56,7 @@ export class CardsController {
     try {
       const { email } = req.user;
       const profile = await this.usersService.getUserByEmail(email);
-      const cards = await this.cardsService.getCards(profile.cardList);
+      const cards = await this.cardsService.getCardsByCardId(profile.cardList);
 
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
@@ -91,7 +91,7 @@ export class CardsController {
   ) {
     try {
       const { id } = req.user;
-      const { amount, receiverCardId, currency } = req.body;
+      const { amount, receiverCardNumber, currency } = req.body;
       if (amount <= 0)
         throw new BadRequestException({
           message: 'Amount сannot be 0 or less',
@@ -100,7 +100,7 @@ export class CardsController {
         id,
         amount,
         senderCardId,
-        receiverCardId,
+        receiverCardNumber,
         currency,
       );
       if (!transaction) throw new BadRequestException(transaction);
@@ -111,19 +111,20 @@ export class CardsController {
     }
   }
 
-  async validateCurrency(currency: Currency) {}
-  // @Get(':id/transactions')
-  // async getTransactions(
-  //   @Param('id', ParseIntPipe) cardId: number,
-  //   @Req() req,
-  //   @Res() res,
-  // ) {
-  //   try {
-  //     const transactions = await this.cardsService.getCardTransactions(cardId);
 
-  //     return res.status(200).json({ transactions: [...transactions] });
-  //   } catch (err) {
-  //     return res.status(500).json(err);
-  //   }
-  // }
+
+  @Get(':id/transactions')
+  async getTransactions(
+    @Param('id', ParseIntPipe) cardId: number,
+    @Req() req,
+    @Res() res,
+  ) {
+    try {
+      const transactions = await this.cardsService.getCardTransactions(cardId);
+
+      return res.status(200).json({ transactions: [...transactions] });
+    } catch (err) {
+      return res.status(500).json(err);
+    }
+  }
 }
