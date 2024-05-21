@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from './users.module';
-import { CardsModule } from './cards.module';
+import { UserModule } from './user.module';
+import { CardModule } from './card.module';
 import { AuthModule } from './auth.module';
-import { TransactionsModule } from './transactions.module';
+import { TransactionModule } from './transaction.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ClientGuard } from 'src/common/guards/client.guard';
 
 @Module({
-  imports: [UsersModule, CardsModule, AuthModule, TransactionsModule],
+  imports: [UserModule, CardModule, AuthModule, TransactionModule],
+  providers: [{ provide: APP_GUARD, useClass: ClientGuard }],
 })
 export class ClientModule {}
