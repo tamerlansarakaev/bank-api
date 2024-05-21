@@ -54,11 +54,11 @@ export class Card {
   @Column({ default: 0 })
   balance: number;
 
-  @Column({ default: Currency.USD })
+  @Column({ type: 'enum', enum: Currency, default: Currency.USD })
   currency: Currency;
 
-  @Column({ default: cardStatus.ACTIVE })
-  status?: cardStatus.ACTIVE | cardStatus.BLOCKED;
+  @Column({ type: 'enum', enum: cardStatus, default: cardStatus.ACTIVE })
+  status?: cardStatus;
 
   @Column({ nullable: true })
   statusMessage?: string | null;

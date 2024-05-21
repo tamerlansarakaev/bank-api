@@ -9,19 +9,19 @@ import { Transaction } from '../../common/entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
 import { CreateCardDTO } from '../../common/dto/create-card.dto';
-import { TransactionsService } from './transactions.service';
+import { TransactionService } from './transaction.service';
 import {
   TransactionStatuses,
   TransactionTypes,
 } from 'src/common/entities/transaction.entity';
 
 @Injectable()
-export class CardsService {
+export class CardService {
   constructor(
     @InjectRepository(Card) private cardRepository: Repository<Card>,
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
-    private transactionsService: TransactionsService,
+    private TransactionService: TransactionService,
   ) {}
 
   generateRandomNumber(length) {
@@ -142,7 +142,7 @@ export class CardsService {
       });
 
     senderCard.balance = senderCard.balance - amount;
-    const transaction = await this.transactionsService.createTransaction({
+    const transaction = await this.TransactionService.createTransaction({
       amount,
       senderCardNumber: senderCard.cardNumber,
       receiverCardNumber: receiverCard.cardNumber,
@@ -169,7 +169,7 @@ export class CardsService {
     setTimeout(async () => {
       receiverCard.balance = receiverCard.balance + transaction.amount;
       receiverCard.transactions.push(transaction.id);
-      await this.transactionsService.setStatusTransaction(
+      await this.TransactionService.setStatusTransaction(
         transaction.id,
         TransactionStatuses.COMPLETED,
       );

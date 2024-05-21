@@ -1,10 +1,11 @@
 import { validate } from 'class-validator';
 import { SignUpAdminDto } from '../dto/sign-up-admin.dto';
 import { Admin } from '../entities/admin.entity';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+@Injectable()
 export class AdminAuthService {
   constructor(
     @InjectRepository(Admin) private adminRepository: Repository<Admin>,
@@ -16,7 +17,7 @@ export class AdminAuthService {
     return true;
   }
 
-  async signUp(signUpData: SignUpAdminDto) {
+  async signUp(signUpData: SignUpAdminDto): Promise<Admin> {
     const admin = new Admin();
     Object.assign(admin, signUpData);
     const validationErrors = await validate(admin).then((errors) =>
@@ -34,5 +35,7 @@ export class AdminAuthService {
 
     if (validationErrors.length)
       throw new BadRequestException(validationErrors);
+
+    return await this.adminRepository.save(admin);
   }
 }

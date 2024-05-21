@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UsersService } from 'src/client/services/users.service';
+import { UserService } from 'src/client/services/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/common/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -14,7 +14,7 @@ import { jwtConstants } from 'src/common/constants';
 @Injectable()
 export class AuthService {
   constructor(
-    private UsersService: UsersService,
+    private UserService: UserService,
     private jwtService: JwtService,
   ) {}
 
@@ -38,7 +38,7 @@ export class AuthService {
     pass: string,
   ): Promise<{ access_token: string; refresh_token: string }> {
     try {
-      const user = await this.UsersService.getUserByEmail(email);
+      const user = await this.UserService.getUserByEmail(email);
       if (!user)
         throw new NotFoundException({
           message: `User with Email: ${email} not found`,
@@ -57,9 +57,9 @@ export class AuthService {
 
   async signUp(userData: CreateUserDto): Promise<SignUpDto> | undefined {
     try {
-      const findUser = await this.UsersService.getUserByEmail(userData.email);
+      const findUser = await this.UserService.getUserByEmail(userData.email);
       if (findUser) throw new BadRequestException('User already exists');
-      const user = await this.UsersService.createUser(userData);
+      const user = await this.UserService.createUser(userData);
       const tokens = await this.getTokens(user.id, userData.email);
       return { ...user, ...tokens };
     } catch (error) {
