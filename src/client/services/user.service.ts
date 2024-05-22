@@ -5,14 +5,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from '../../common/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { validate } from 'class-validator';
-import { CardService } from 'src/client/services/card.service';
+import { ClientCardService } from 'src/client/services/card.service';
 import { configHash } from 'src/common/constants';
 
 @Injectable()
-export class UserService {
+export class ClientUserService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    private readonly cardService: CardService,
+    private readonly cardService: ClientCardService,
   ) {}
 
   async getUserByEmail(email: string) {
