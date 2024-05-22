@@ -45,8 +45,8 @@ export class Card {
 
   @Column()
   @IsNotEmpty()
-  @IsInt()
-  cvv: number;
+  @IsString()
+  cvv: string;
 
   @Column()
   userId: number;
