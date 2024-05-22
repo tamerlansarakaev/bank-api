@@ -4,7 +4,7 @@ export class CreateCardDTO {
   name: string;
   surname: string;
   cardNumber: string;
-  cvv: number;
+  cvv: string;
   userId: number;
   expirationDate: Date;
   currency: Currency;

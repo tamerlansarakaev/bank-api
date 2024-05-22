@@ -1,5 +1,6 @@
 import { Controller, Res, Req, Get } from '@nestjs/common';
 import { ClientUserService } from '../services/user.service';
+import { handleError } from 'src/common/handles/handleError';
 
 @Controller('client/users')
 export class ClientUserController {
@@ -12,11 +13,7 @@ export class ClientUserController {
       const getProfile = await this.userService.getProfile(id);
       return res.status(200).json({ userProfile: getProfile });
     } catch (error) {
-      console.log(error);
-      if (!error.status || !error.message) {
-        return res.status(500).json({ message: error.detail });
-      }
-      return res.status(error.status).json({ message: error.response.errors });
+      return handleError(res, error);
     }
   }
 }

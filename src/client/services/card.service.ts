@@ -36,7 +36,7 @@ export class ClientCardService {
     const cardData: CreateCardDTO = {
       name,
       surname,
-      cvv: this.generateRandomNumber(3),
+      cvv: this.generateRandomNumber(3).toString(),
       cardNumber: this.generateRandomNumber(16).toString(),
       userId,
       expirationDate: currentDate,
@@ -73,6 +73,7 @@ export class ClientCardService {
 
   async getCard(id: number, userId: number) {
     const card = await this.cardRepository.findOne({ where: { id } });
+    if (!card) throw new NotFoundException({ message: 'Card not found' });
     if (card.userId === userId) {
       return card;
     } else {

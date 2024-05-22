@@ -17,6 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
+import { handleError } from 'src/common/handles/handleError';
 
 @Controller('client/cards')
 export class ClientCardController {
@@ -46,7 +47,7 @@ export class ClientCardController {
       return res.status(200).json(createdCard);
     } catch (error) {
       console.log(error);
-      return res.status(error.status).json(error.response.errors || error);
+      return handleError(res, error);
     }
   }
 
@@ -60,9 +61,7 @@ export class ClientCardController {
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
       console.log(error);
-      return res
-        .status(error.status || 500)
-        .json(error.response.errors || error);
+      return handleError(res, error);
     }
   }
 
@@ -75,10 +74,10 @@ export class ClientCardController {
     try {
       const userId = req.user.id;
       const card = await this.CardService.getCard(cardId, userId);
-
+      console.log(1)
       return res.status(200).json(card);
     } catch (err) {
-      return res.status(500).json({ message: err.message });
+      return handleError(res, err);
     }
   }
 
@@ -122,7 +121,7 @@ export class ClientCardController {
 
       return res.status(200).json({ transactions: [...transactions] });
     } catch (err) {
-      return res.status(500).json(err);
+      return handleError(res, err);
     }
   }
 }
