@@ -14,7 +14,7 @@ import { AuthService } from '../services/auth.service';
 import { CreateUserDto } from 'src/common/dto/create-user.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { RefreshTokenGuard } from 'src/common/guards/refresh-token.guard';
-import { handleError } from 'src/common/handles/handleError';
+import { handleError } from 'src/common/utils/handles/handleError';
 
 @Controller('client/auth')
 export class AuthController {
@@ -30,7 +30,6 @@ export class AuthController {
       );
       return res.status(200).json(result);
     } catch (error) {
-      console.log(error);
       if (!error.status || !error.message) {
         return res.status(500).json({ message: error });
       }
