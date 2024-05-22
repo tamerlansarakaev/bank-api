@@ -1,6 +1,6 @@
 import { Controller, Res, Req, Get } from '@nestjs/common';
 import { ClientUserService } from '../services/user.service';
-import { handleError } from 'src/common/handles/handleError';
+import { handleError } from 'src/common/utils/handles/handleError';
 
 @Controller('client/users')
 export class ClientUserController {

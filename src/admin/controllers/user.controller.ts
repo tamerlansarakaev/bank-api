@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { AdminUserService } from '../services/user.service';
 import { Response } from 'express';
-import { handleError } from 'src/common/handles/handleError';
+import { handleError } from 'src/common/utils/handles/handleError';
 
 @Controller('admin/users')
 export class AdminUserController {
