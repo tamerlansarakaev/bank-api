@@ -11,21 +11,21 @@ import {
   Res,
   forwardRef,
 } from '@nestjs/common';
-import { UserService } from 'src/client/services/user.service';
-import { CardService } from '../services/card.service';
+import { ClientUserService } from 'src/client/services/user.service';
+import { ClientCardService } from '../services/card.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
 
 @Controller('client/cards')
-export class CardController {
+export class ClientCardController {
   constructor(
-    @Inject(forwardRef(() => UserService))
-    private UserService: UserService,
+    @Inject(forwardRef(() => ClientUserService))
+    private userService: ClientUserService,
 
     @InjectRepository(User) private userRepository: Repository<User>,
-    private CardService: CardService,
+    private CardService: ClientCardService,
   ) {}
 
   @Post()
@@ -33,7 +33,7 @@ export class CardController {
     try {
       const { email } = req.user;
       if (!email) throw new BadRequestException();
-      const user = await this.UserService.getUserByEmail(email);
+      const user = await this.userService.getUserByEmail(email);
       if (!user) throw new NotFoundException('User Not Found');
       const createdCard = await this.CardService.addCard(
         user.id,
@@ -54,7 +54,7 @@ export class CardController {
   async getCards(@Req() req, @Res() res: Response) {
     try {
       const { email } = req.user;
-      const profile = await this.UserService.getUserByEmail(email);
+      const profile = await this.userService.getUserByEmail(email);
       const cards = await this.CardService.getCardsByCardId(profile.cardList);
 
       return res.status(200).json({ cards: [...cards] });

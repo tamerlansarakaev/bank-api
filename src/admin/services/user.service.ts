@@ -9,7 +9,8 @@ export class AdminUserService {
     @InjectRepository(User) private userRepository: Repository<User>,
   ) {}
 
-  async getAllUsers() {
-    const users = await this.userRepository.find()
+  async getAllUsers(): Promise<Array<User>> {
+    const users = await this.userRepository.find();
+    return users;
   }
 }

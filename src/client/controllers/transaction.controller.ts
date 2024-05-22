@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
-import { TransactionService } from '../services/transaction.service';
+import { ClientTransactionService } from '../services/transaction.service';
 
 @Controller('client/transactions')
-export class TransactionController {
-  constructor(private TransactionService: TransactionService) {}
+export class ClientTransactionController {
+  constructor(private ClientTransactionService: ClientTransactionService) {}
 }

@@ -18,6 +18,9 @@ export class ClientGuard implements CanActivate {
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    const path = request.url;
+    if (path.startsWith('/admin')) return true;
+
     const token = this.extractTokenFromHeader(request);
     const isPublic = this.reflector.getAllAndOverride(IS_PUBLIC_KEY, [
       context.getHandler(),
