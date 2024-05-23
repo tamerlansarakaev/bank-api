@@ -11,6 +11,7 @@ import {
   TransactionTypes,
 } from 'src/common/entities/transaction.entity';
 import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
+import { resolve } from 'path';
 
 @Injectable()
 export class CardsService {
@@ -80,9 +81,13 @@ export class CardsService {
   async getCardTransactions(cardId: number) {
     const card = await this.cardRepository.findOne({ where: { id: cardId } });
     const transactions = card.transactions;
-    const resultTransaction = transactions.map(
-      async (id) => await this.transactionRepository.find({ where: { id } }),
-    );
+    const resultTransaction = [];
+    for (const transactionId of transactions) {
+      const transaction = await this.transactionRepository.findOne({
+        where: { id: transactionId },
+      });
+      resultTransaction.push(transaction);
+    }
     return resultTransaction;
   }
 
@@ -137,10 +142,6 @@ export class CardsService {
     const randomTimeForTimeout = Math.floor(
       Math.random() * (10000 - 5000) + 5000,
     );
-    console.log(randomTimeForTimeout);
-    setTimeout(() => {
-      console.log(transaction);
-      console.log(1111);
-    }, randomTimeForTimeout);
+    setTimeout(() => {}, randomTimeForTimeout);
   }
 }

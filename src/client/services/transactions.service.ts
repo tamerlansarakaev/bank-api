@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
 import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
+import { Card } from 'src/common/entities/card.entity';
 import {
   Transaction,
   TransactionStatuses,
@@ -38,5 +39,12 @@ export class TransactionsService {
     if (errors.length) throw new BadRequestException(errors);
 
     return await this.transactionRepository.save(transaction);
+  }
+
+  async getTransactionInfo(transactionId) {
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: transactionId },
+    });
+    return transaction;
   }
 }
