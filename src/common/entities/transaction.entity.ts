@@ -1,5 +1,10 @@
 import { IsDate, IsInt, IsNotEmpty } from 'class-validator';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Currency } from './card.entity';
 
 export enum TransactionTypes {
@@ -10,7 +15,7 @@ export enum TransactionTypes {
 export enum TransactionStatuses {
   ACTIVE = 'Active',
   PENDING = 'Pending',
-  FINISHED = 'Finished',
+  COMPLETED = 'Completed',
   DENIED = 'Denied',
 }
 
@@ -33,7 +38,11 @@ export class Transaction {
   @Column()
   receiverCardNumber: string;
 
-  @Column({ default: TransactionStatuses.PENDING })
+  @Column({
+    type: 'enum',
+    enum: TransactionStatuses,
+    default: TransactionStatuses.PENDING,
+  })
   @IsNotEmpty()
   status: TransactionStatuses;
 
@@ -45,5 +54,6 @@ export class Transaction {
 
   @Column({ default: new Date() })
   @IsDate()
+  @UpdateDateColumn()
   date: Date;
 }

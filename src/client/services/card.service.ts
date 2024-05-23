@@ -1,25 +1,27 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Card, Currency } from '../../common/entities/card.entity';
 import { Transaction } from '../../common/entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
 import { CreateCardDTO } from '../../common/dto/create-card.dto';
-import { TransactionsService } from './transactions.service';
+import { ClientTransactionService } from './transaction.service';
 import {
   TransactionStatuses,
   TransactionTypes,
 } from 'src/common/entities/transaction.entity';
-import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
-import { resolve } from 'path';
 
 @Injectable()
-export class CardsService {
+export class ClientCardService {
   constructor(
     @InjectRepository(Card) private cardRepository: Repository<Card>,
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
-    private transactionsService: TransactionsService,
+    private transactionService: ClientTransactionService,
   ) {}
 
   generateRandomNumber(length) {
@@ -34,7 +36,7 @@ export class CardsService {
     const cardData: CreateCardDTO = {
       name,
       surname,
-      cvv: this.generateRandomNumber(3),
+      cvv: this.generateRandomNumber(3).toString(),
       cardNumber: this.generateRandomNumber(16).toString(),
       userId,
       expirationDate: currentDate,
@@ -53,7 +55,7 @@ export class CardsService {
     return await this.cardRepository.save(card);
   }
 
-  async getCards(cardsId: Array<number>) {
+  async getCardsByCardId(cardsId: Array<number>) {
     const cardList: Array<Card> = [];
     if (!cardsId) {
       return null;
@@ -71,6 +73,7 @@ export class CardsService {
 
   async getCard(id: number, userId: number) {
     const card = await this.cardRepository.findOne({ where: { id } });
+    if (!card) throw new NotFoundException({ message: 'Card not found' });
     if (card.userId === userId) {
       return card;
     } else {
@@ -91,6 +94,16 @@ export class CardsService {
     return resultTransaction;
   }
 
+  async getCardByCardNumber(
+    cardNumber: string,
+    userId: number,
+  ): Promise<Card | null> {
+    const card = await this.cardRepository.findOne({
+      where: { cardNumber, userId },
+    });
+    return card || null;
+  }
+
   async verifyCardOwnership(userId, cardId): Promise<boolean> {
     const card = await this.getCard(cardId, userId);
     if (!card) return false;
@@ -101,7 +114,7 @@ export class CardsService {
     userId: number,
     amount: number,
     senderCardId: number,
-    receiverCardId: number,
+    receiverCardNumber: string,
     currency: Currency,
   ) {
     if (!senderCardId)
@@ -112,16 +125,29 @@ export class CardsService {
     if (!validate)
       throw new BadRequestException({ message: "It isn't your card" });
 
-    const [senderCard, receiverCard] = await this.getCards([
-      senderCardId,
-      receiverCardId,
-    ]);
+    const senderCard = await this.getCard(senderCardId, userId);
+    const receiverCard = await this.getCardByCardNumber(
+      receiverCardNumber,
+      userId,
+    );
+
+    if (!receiverCard)
+      throw new NotFoundException({ message: 'Receiver Card not found' });
     if (senderCard.balance - amount < 0)
       throw new Error('Not enought money on card');
-    senderCard.balance = senderCard.balance - amount;
-    console.log(senderCard.balance);
 
-    const transaction = await this.transactionsService.createTransaction({
+    const currenciesValidate = this.validateCurrency([
+      senderCard.currency,
+      receiverCard.currency,
+    ]);
+
+    if (!currenciesValidate)
+      throw new BadRequestException({
+        message: 'Card currencies are different ',
+      });
+
+    senderCard.balance = senderCard.balance - amount;
+    const transaction = await this.transactionService.createTransaction({
       amount,
       senderCardNumber: senderCard.cardNumber,
       receiverCardNumber: receiverCard.cardNumber,
@@ -131,17 +157,38 @@ export class CardsService {
     });
 
     if (!transaction) return;
-    // Add transaction id to card
+    // Add transaction to card
     senderCard.transactions.push(transaction.id);
 
     await this.cardRepository.save(senderCard);
     return transaction;
   }
 
-  async confirmSendTransaction(transaction: CreateTransactionDto) {
+  async confirmSendTransaction(transaction: Transaction) {
     const randomTimeForTimeout = Math.floor(
       Math.random() * (10000 - 5000) + 5000,
     );
-    setTimeout(() => {}, randomTimeForTimeout);
+    const receiverCard = await this.cardRepository.findOne({
+      where: { cardNumber: transaction.receiverCardNumber },
+    });
+    setTimeout(async () => {
+      receiverCard.balance = receiverCard.balance + transaction.amount;
+      receiverCard.transactions.push(transaction.id);
+      await this.transactionService.setStatusTransaction(
+        transaction.id,
+        TransactionStatuses.COMPLETED,
+      );
+      await this.cardRepository.save(receiverCard);
+    }, randomTimeForTimeout);
+  }
+
+  async validateCurrency(currency: Currency[]) {
+    let status = true;
+    currency.map((el, i) => {
+      if (el !== currency[i]) {
+        status = false;
+      }
+    });
+    return status;
   }
 }

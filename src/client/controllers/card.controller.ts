@@ -11,22 +11,23 @@ import {
   Res,
   forwardRef,
 } from '@nestjs/common';
-import { UsersService } from 'src/client/services/users.service';
-import { CardsService } from '../services/cards.service';
+import { ClientUserService } from 'src/client/services/user.service';
+import { ClientCardService } from '../services/card.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
+import { handleError } from 'src/common/utils/handles/handleError';
 import { Currency } from 'src/common/entities/card.entity';
 
 @Controller('client/cards')
-export class CardsController {
+export class ClientCardController {
   constructor(
-    @Inject(forwardRef(() => UsersService))
-    private usersService: UsersService,
+    @Inject(forwardRef(() => ClientUserService))
+    private userService: ClientUserService,
 
     @InjectRepository(User) private userRepository: Repository<User>,
-    private cardsService: CardsService,
+    private cardService: ClientCardService,
   ) {}
 
   @Post()
@@ -34,9 +35,9 @@ export class CardsController {
     try {
       const { email } = req.user;
       if (!email) throw new BadRequestException();
-      const user = await this.usersService.getUserByEmail(email);
+      const user = await this.userService.getUserByEmail(email);
       if (!user) throw new NotFoundException('User Not Found');
-      const createdCard = await this.cardsService.addCard(
+      const createdCard = await this.cardService.addCard(
         user.id,
         user.name,
         user.surname,
@@ -46,8 +47,7 @@ export class CardsController {
 
       return res.status(200).json(createdCard);
     } catch (error) {
-      console.log(error);
-      return res.status(error.status).json(error.response.errors || error);
+      return handleError(res, error);
     }
   }
 
@@ -55,15 +55,12 @@ export class CardsController {
   async getCards(@Req() req, @Res() res: Response) {
     try {
       const { email } = req.user;
-      const profile = await this.usersService.getUserByEmail(email);
-      const cards = await this.cardsService.getCards(profile.cardList);
+      const profile = await this.userService.getUserByEmail(email);
+      const cards = await this.cardService.getCardsByCardId(profile.cardList);
 
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
-      console.log(error);
-      return res
-        .status(error.status || 500)
-        .json(error.response.errors || error);
+      return handleError(res, error);
     }
   }
 
@@ -75,11 +72,10 @@ export class CardsController {
   ) {
     try {
       const userId = req.user.id;
-      const card = await this.cardsService.getCard(cardId, userId);
-
+      const card = await this.cardService.getCard(cardId, userId);
       return res.status(200).json(card);
     } catch (err) {
-      return res.status(500).json({ message: err.message });
+      return handleError(res, err);
     }
   }
 
@@ -91,20 +87,21 @@ export class CardsController {
   ) {
     try {
       const { id } = req.user;
-      const { amount, receiverCardId, currency } = req.body;
+      const { amount, receiverCardNumber, currency } = req.body;
       if (amount <= 0)
         throw new BadRequestException({
           message: 'Amount сannot be 0 or less',
         });
-      const transaction = await this.cardsService.sendMoneyByCardsId(
+      const transaction = await this.cardService.sendMoneyByCardsId(
         id,
         amount,
         senderCardId,
-        receiverCardId,
+        receiverCardNumber,
         currency,
       );
       if (!transaction) throw new BadRequestException(transaction);
-      this.cardsService.confirmSendTransaction(transaction);
+      this.cardService.confirmSendTransaction(transaction);
+
       return res.status(200).json(transaction);
     } catch (error) {
       return res.status(error.status || 500).json({ message: error.message });
@@ -120,7 +117,7 @@ export class CardsController {
     @Res() res,
   ) {
     try {
-      const transactions = await this.cardsService.getCardTransactions(cardId);
+      const transactions = await this.cardService.getCardTransactions(cardId);
 
       return res.status(200).json({ transactions: [...transactions] });
     } catch (err) {

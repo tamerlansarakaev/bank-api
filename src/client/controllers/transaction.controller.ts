@@ -8,13 +8,11 @@ import {
   Get,
   Req,
 } from '@nestjs/common';
-import { TransactionsService } from '../services/transactions.service';
+import { ClientTransactionService } from '../services/transaction.service';
 
 @Controller('client/transactions')
-export class TransactionsController {
-  constructor(private transactionsService: TransactionsService) {}
-  @Post()
-  async createTransaction(@Body() transactionData, @Res() res) {}
+export class ClientTransactionController {
+  constructor(private transactionsService: ClientTransactionService) {}
 
   @Get(':id')
   async getTransactionInfo(

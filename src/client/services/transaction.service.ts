@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
 import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
-import { Card } from 'src/common/entities/card.entity';
 import {
   Transaction,
   TransactionStatuses,
@@ -10,7 +9,7 @@ import {
 import { Repository } from 'typeorm';
 
 @Injectable()
-export class TransactionsService {
+export class ClientTransactionService {
   constructor(
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
@@ -41,11 +40,15 @@ export class TransactionsService {
     return await this.transactionRepository.save(transaction);
   }
 
-  async getTransactionInfo(transactionId) {
+  async setStatusTransaction(
+    transactionId: number,
+    status: TransactionStatuses,
+  ) {
     const transaction = await this.transactionRepository.findOne({
       where: { id: transactionId },
     });
+    transaction.status = status;
 
-    return transaction;
+    return await this.transactionRepository.save(transaction);
   }
 }

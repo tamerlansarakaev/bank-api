@@ -5,14 +5,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from '../../common/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { validate } from 'class-validator';
-import { CardsService } from 'src/client/services/cards.service';
+import { ClientCardService } from 'src/client/services/card.service';
 import { configHash } from 'src/common/constants';
 
 @Injectable()
-export class UsersService {
+export class ClientUserService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
-    private readonly cardService: CardsService,
+    private readonly cardService: ClientCardService,
   ) {}
 
   async getUserByEmail(email: string) {
@@ -46,7 +46,7 @@ export class UsersService {
 
   async getProfile(id) {
     const userProfile = await this.usersRepository.findOne({ where: { id } });
-    const cardList = await this.cardService.getCards(userProfile.cardList);
+    const cardList = await this.cardService.getCardsByCardId(userProfile.cardList);
     const totalBalance = await this.getBalance(id);
     const errors = await validate(id).then((errors) =>
       errors.map((error) => error.constraints),
@@ -57,7 +57,7 @@ export class UsersService {
 
   async getBalance(id) {
     const user = await this.usersRepository.findOne({ where: { id } });
-    const cards = await this.cardService.getCards(user.cardList);
+    const cards = await this.cardService.getCardsByCardId(user.cardList);
     const totalBalance = cards.reduce(
       (totalBalance, card) => totalBalance + card.balance,
       0,
