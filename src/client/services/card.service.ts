@@ -84,9 +84,13 @@ export class ClientCardService {
   async getCardTransactions(cardId: number) {
     const card = await this.cardRepository.findOne({ where: { id: cardId } });
     const transactions = card.transactions;
-    const resultTransaction = transactions.map(
-      async (id) => await this.transactionRepository.find({ where: { id } }),
-    );
+    const resultTransaction = [];
+    for (const transactionId of transactions) {
+      const transaction = await this.transactionRepository.findOne({
+        where: { id: transactionId },
+      });
+      resultTransaction.push(transaction);
+    }
     return resultTransaction;
   }
 
