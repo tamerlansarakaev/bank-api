@@ -45,6 +45,7 @@ export class TransactionsService {
     const transaction = await this.transactionRepository.findOne({
       where: { id: transactionId },
     });
+
     return transaction;
   }
 }
