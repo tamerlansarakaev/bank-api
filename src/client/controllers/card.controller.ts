@@ -19,6 +19,7 @@ import { User } from 'src/common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Response } from 'express';
 import { handleError } from 'src/common/utils/handles/handleError';
+import { Currency } from 'src/common/entities/card.entity';
 
 @Controller('client/cards')
 export class ClientCardController {
@@ -108,13 +109,15 @@ export class ClientCardController {
     }
   }
 
+
   @Get(':id/transactions')
   async getTransactions(@Param('id', ParseIntPipe) cardId: number, @Res() res) {
     try {
       const transactions = await this.cardService.getCardTransactions(cardId);
       return res.status(200).json({ transactions: [...transactions] });
     } catch (err) {
-      return handleError(res, err);
+      console.log(err);
+      return res.status(500).json(err);
     }
   }
 
