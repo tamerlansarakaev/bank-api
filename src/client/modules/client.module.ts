@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from './users.module';
-import { CardsModule } from './cards.module';
+import { ClientUserModule } from './user.module';
+import { ClientCardModule } from './card.module';
 import { AuthModule } from './auth.module';
-import { TransactionsModule } from './transactions.module';
+import { ClientTransactionModule } from './transaction.module';
 
 @Module({
-  imports: [UsersModule, CardsModule, AuthModule, TransactionsModule],
+  imports: [
+    ClientUserModule,
+    ClientCardModule,
+    AuthModule,
+    ClientTransactionModule,
+  ],
+  providers: [],
 })
 export class ClientModule {}

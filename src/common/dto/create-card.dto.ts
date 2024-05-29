@@ -1,10 +1,10 @@
-import { Currency } from "../entities/card.entity";
+import { Currency } from '../entities/card.entity';
 
 export class CreateCardDTO {
   name: string;
   surname: string;
-  cardNumber: number;
-  cvv: number;
+  cardNumber: string;
+  cvv: string;
   userId: number;
   expirationDate: Date;
   currency: Currency;
