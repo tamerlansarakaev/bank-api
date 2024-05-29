@@ -1,11 +1,4 @@
 export function maskCardNumber(cardNumber: string) {
-  return cardNumber
-    .split('')
-    .map((cardNum, i) => {
-      if (cardNumber.length - 4 <= i) {
-        return cardNum;
-      }
-      return '*';
-    })
-    .join('');
+  const last4Digits = cardNumber.slice(-4);
+  return last4Digits.padStart(cardNumber.length, '*');
 }

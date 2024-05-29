@@ -9,7 +9,6 @@ export class AdminCardController {
 
   @Get()
   async getAllCards(@Res() res: Response) {
-    console.log(1)
     try {
       const cards = await this.cardService.getAllCards();
       return res.status(200).json(cards);

@@ -1,6 +1,8 @@
 export const jwtConstants = {
-    secret: 'testToken',
-    refreshToken: 'testRefreshToken'
+    secret: 'clientToken',
+    adminToken:"adminToken",
+    refreshToken: 'refreshToken',
+    adminRefreshToken: 'adminRefreshToken'
 }
 
 export const configHash = {
