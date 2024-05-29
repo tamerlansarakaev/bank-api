@@ -25,6 +25,6 @@ export class Admin {
   @IsString()
   password: string;
 
-  @Column({ type: 'jsonb', default: [] })
+  @Column({ enum: Role, enumName: 'roles', type: 'jsonb', default: [] })
   roles: Array<Role>;
 }

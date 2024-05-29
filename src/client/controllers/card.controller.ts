@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   Inject,
@@ -26,7 +27,7 @@ export class ClientCardController {
     private userService: ClientUserService,
 
     @InjectRepository(User) private userRepository: Repository<User>,
-    private CardService: ClientCardService,
+    private cardService: ClientCardService,
   ) {}
 
   @Post()
@@ -36,7 +37,7 @@ export class ClientCardController {
       if (!email) throw new BadRequestException();
       const user = await this.userService.getUserByEmail(email);
       if (!user) throw new NotFoundException('User Not Found');
-      const createdCard = await this.CardService.addCard(
+      const createdCard = await this.cardService.addCard(
         user.id,
         user.name,
         user.surname,
@@ -55,7 +56,7 @@ export class ClientCardController {
     try {
       const { email } = req.user;
       const profile = await this.userService.getUserByEmail(email);
-      const cards = await this.CardService.getCardsByCardId(profile.cardList);
+      const cards = await this.cardService.getCardsByCardId(profile.cardList);
 
       return res.status(200).json({ cards: [...cards] });
     } catch (error) {
@@ -71,7 +72,7 @@ export class ClientCardController {
   ) {
     try {
       const userId = req.user.id;
-      const card = await this.CardService.getCard(cardId, userId);
+      const card = await this.cardService.getCard(cardId, userId);
       return res.status(200).json(card);
     } catch (err) {
       return handleError(res, err);
@@ -91,7 +92,7 @@ export class ClientCardController {
         throw new BadRequestException({
           message: 'Amount сannot be 0 or less',
         });
-      const transaction = await this.CardService.sendMoneyByCardsId(
+      const transaction = await this.cardService.sendMoneyByCardsId(
         id,
         amount,
         senderCardId,
@@ -99,7 +100,7 @@ export class ClientCardController {
         currency,
       );
       if (!transaction) throw new BadRequestException(transaction);
-      this.CardService.confirmSendTransaction(transaction);
+      this.cardService.confirmSendTransaction(transaction);
 
       return res.status(200).json(transaction);
     } catch (error) {
@@ -108,17 +109,32 @@ export class ClientCardController {
   }
 
   @Get(':id/transactions')
-  async getTransactions(
-    @Param('id', ParseIntPipe) cardId: number,
+  async getTransactions(@Param('id', ParseIntPipe) cardId: number, @Res() res) {
+    try {
+      const transactions = await this.cardService.getCardTransactions(cardId);
+      return res.status(200).json({ transactions: [...transactions] });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  }
+
+  @Post('deposit')
+  async deposit(
+    @Body() { cardNumber, amount, currency },
     @Req() req,
     @Res() res,
   ) {
     try {
-      const transactions = await this.CardService.getCardTransactions(cardId);
-
-      return res.status(200).json({ transactions: [...transactions] });
-    } catch (err) {
-      return handleError(res, err);
+      const { id } = req.user;
+      const depositResponse = await this.cardService.depositByCardNumber(
+        id,
+        cardNumber,
+        amount,
+        currency,
+      );
+      return res.status(200).json(depositResponse);
+    } catch (error) {
+      return handleError(res, error);
     }
   }
 }
