@@ -36,7 +36,7 @@ export class AdminAuthService {
           id: data.id,
           roles: data.roles,
         },
-        { secret: jwtConstants.adminRefreshToken },
+        { secret: jwtConstants.adminRefreshToken, expiresIn: '7d' },
       ),
     ]);
 

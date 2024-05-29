@@ -191,4 +191,30 @@ export class ClientCardService {
     });
     return status;
   }
+
+  async depositByCardNumber(userId, cardNumber: string, amount, currency) {
+    const card = await this.getCardByCardNumber(cardNumber, userId);
+    if (!card) throw new NotFoundException({ message: 'Card not found' });
+
+    const validateCurrency = await this.validateCurrency([
+      currency,
+      card.currency,
+    ]);
+    if (!validateCurrency)
+      throw new BadRequestException({
+        message: 'Currency is different',
+        cardCurrency: card.currency,
+        receiverCurrency: currency,
+      });
+
+    const transaction = await this.transactionService.createTransaction({
+      receiverCardNumber: cardNumber,
+      amount,
+      currency,
+      status: TransactionStatuses.ACTIVE,
+      type: TransactionTypes.DEPOSIT,
+    });
+
+    return transaction;
+  }
 }

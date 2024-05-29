@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   Inject,
@@ -108,21 +109,35 @@ export class ClientCardController {
     }
   }
 
-  async validateCurrency(currency: Currency) {}
 
   @Get(':id/transactions')
-  async getTransactions(
-    @Param('id', ParseIntPipe) cardId: number,
-    @Req() req,
-    @Res() res,
-  ) {
+  async getTransactions(@Param('id', ParseIntPipe) cardId: number, @Res() res) {
     try {
       const transactions = await this.cardService.getCardTransactions(cardId);
-
       return res.status(200).json({ transactions: [...transactions] });
     } catch (err) {
       console.log(err);
       return res.status(500).json(err);
+    }
+  }
+
+  @Post('deposit')
+  async deposit(
+    @Body() { cardNumber, amount, currency },
+    @Req() req,
+    @Res() res,
+  ) {
+    try {
+      const { id } = req.user;
+      const depositResponse = await this.cardService.depositByCardNumber(
+        id,
+        cardNumber,
+        amount,
+        currency,
+      );
+      return res.status(200).json(depositResponse);
+    } catch (error) {
+      return handleError(res, error);
     }
   }
 }
