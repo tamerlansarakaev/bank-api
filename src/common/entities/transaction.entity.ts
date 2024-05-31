@@ -32,8 +32,8 @@ export class Transaction {
   @IsNotEmpty()
   currency: Currency;
 
-  @Column()
-  senderCardNumber: string;
+  @Column({ default: null })
+  senderCardNumber: string | null;
 
   @Column()
   receiverCardNumber: string;

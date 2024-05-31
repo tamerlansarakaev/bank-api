@@ -43,7 +43,7 @@ export class AuthController {
     try {
       const createdUser = await this.authService.signUp(signUpData);
       if (!createdUser) throw new BadRequestException();
-      return res.status(200).json({ user: createdUser });
+      return res.status(201).json({ user: createdUser });
     } catch (error) {
       if (!error.status || !error.message) {
         return res.status(500).json({ message: error });

@@ -46,7 +46,7 @@ export class ClientCardController {
       user.cardList.push(createdCard.id);
       await this.userRepository.save({ ...user });
 
-      return res.status(200).json(createdCard);
+      return res.status(201).json(createdCard);
     } catch (error) {
       return handleError(res, error);
     }
@@ -89,6 +89,11 @@ export class ClientCardController {
     try {
       const { id } = req.user;
       const { amount, receiverCardNumber, currency } = req.body;
+
+      if (!receiverCardNumber)
+        throw new BadRequestException({
+          message: 'Receiver card number is important field',
+        });
       if (amount <= 0)
         throw new BadRequestException({
           message: 'Amount сannot be 0 or less',
@@ -103,12 +108,11 @@ export class ClientCardController {
       if (!transaction) throw new BadRequestException(transaction);
       this.cardService.confirmSendTransaction(transaction);
 
-      return res.status(200).json(transaction);
+      return res.status(202).json(transaction);
     } catch (error) {
       return res.status(error.status || 500).json({ message: error.message });
     }
   }
-
 
   @Get(':id/transactions')
   async getTransactions(@Param('id', ParseIntPipe) cardId: number, @Res() res) {
@@ -135,7 +139,7 @@ export class ClientCardController {
         amount,
         currency,
       );
-      return res.status(200).json(depositResponse);
+      return res.status(202).json(depositResponse);
     } catch (error) {
       return handleError(res, error);
     }

@@ -1,4 +1,12 @@
-import { Controller, Get, Param, ParseIntPipe, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Put,
+  Res,
+} from '@nestjs/common';
 import { AdminCardService } from '../services/card.service';
 import { Response } from 'express';
 import { handleError } from 'src/common/utils/handles/handleError';
@@ -23,6 +31,20 @@ export class AdminCardController {
     @Res() res: Response,
   ) {
     try {
+    } catch (error) {
+      return handleError(res, error);
+    }
+  }
+
+  @Put(':id/block')
+  async blockCardById(
+    @Body() { statusMessage },
+    @Param('id', ParseIntPipe) cardId: number,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.cardService.blockCard(cardId, statusMessage);
+      return res.status(200).json(result);
     } catch (error) {
       return handleError(res, error);
     }
