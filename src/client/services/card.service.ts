@@ -30,7 +30,7 @@ export class ClientCardService {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  async addCard(userId, name, surname): Promise<Card> {
+  async addCard(userId: number, name, surname): Promise<Card> {
     let currentDate = new Date();
     currentDate.setFullYear(currentDate.getFullYear() + 5);
     const cardData: CreateCardDTO = {
@@ -104,7 +104,7 @@ export class ClientCardService {
     return card || null;
   }
 
-  async verifyCardOwnership(userId, cardId): Promise<boolean> {
+  async verifyCardOwnership(userId: number, cardId: number): Promise<boolean> {
     const card = await this.getCard(cardId, userId);
     if (!card) return false;
     return true;
@@ -192,7 +192,12 @@ export class ClientCardService {
     return status;
   }
 
-  async depositByCardNumber(userId, cardNumber: string, amount, currency) {
+  async depositByCardNumber(
+    userId: number,
+    cardNumber: string,
+    amount: number,
+    currency: Currency,
+  ) {
     const card = await this.getCardByCardNumber(cardNumber, userId);
     if (!card) throw new NotFoundException({ message: 'Card not found' });
 
@@ -214,6 +219,9 @@ export class ClientCardService {
       status: TransactionStatuses.ACTIVE,
       type: TransactionTypes.DEPOSIT,
     });
+    card.transactions.push(transaction.id);
+
+    await this.cardRepository.save(card);
 
     return transaction;
   }

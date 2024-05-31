@@ -59,11 +59,19 @@ export class AdminTransactionService {
       balance: card.balance + transaction.amount,
     });
 
-    const confirmedTransaction = await this.transactionRepository.save({
-      id: transactionId,
-      status: TransactionStatuses.COMPLETED,
-    });
+    const confirmedTransaction = await this.setStatusTransaction(
+      transactionId,
+      TransactionStatuses.COMPLETED,
+    );
 
     return confirmedTransaction;
+  }
+
+  async setStatusTransaction(transactionId, status: TransactionStatuses) {
+    const updatedTransaction = await this.transactionRepository.save({
+      id: transactionId,
+      status,
+    });
+    return updatedTransaction;
   }
 }

@@ -1,13 +1,12 @@
 import {
   IsDate,
-  IsInt,
   IsNotEmpty,
   IsString,
   MinLength,
 } from 'class-validator';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-export enum cardStatus {
+export enum CardStatus {
   ACTIVE = 'Active',
   BLOCKED = 'Blocked',
 }
@@ -57,8 +56,8 @@ export class Card {
   @Column({ type: 'enum', enum: Currency, default: Currency.USD })
   currency: Currency;
 
-  @Column({ type: 'enum', enum: cardStatus, default: cardStatus.ACTIVE })
-  status?: cardStatus;
+  @Column({ type: 'enum', enum: CardStatus, default: CardStatus.ACTIVE })
+  status?: CardStatus;
 
   @Column({ nullable: true })
   statusMessage?: string | null;
