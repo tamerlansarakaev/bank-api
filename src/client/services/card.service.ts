@@ -1,23 +1,31 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Card, Currency } from '../../common/entities/card.entity';
+import { Card, CardStatus, Currency } from '../../common/entities/card.entity';
 import { Transaction } from '../../common/entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
-import { CreateCardDTO } from '../../common/dto/create-card.dto';
+import { CreateCardDTO } from '../../common/dto/card/create-card.dto';
 import { ClientTransactionService } from './transaction.service';
 import {
   TransactionStatuses,
   TransactionTypes,
 } from 'src/common/entities/transaction.entity';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { IDepositData } from 'src/common/interfaces/depositData';
+import { ISendData } from 'src/common/interfaces/sendData';
+import { ICreateCard } from 'src/common/interfaces/createCardData';
+import { reddisHelper } from 'src/common/utils/reddis';
 
 @Injectable()
 export class ClientCardService {
   constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(Card) private cardRepository: Repository<Card>,
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
@@ -30,14 +38,25 @@ export class ClientCardService {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  async addCard(userId: number, name, surname): Promise<Card> {
+  async generateCardNumber() {
+    const cardNumber = this.generateRandomNumber(16).toString();
+    const validate = await this.cardRepository.find({
+      where: { cardNumber },
+    });
+    if (validate.length) {
+      return this.generateCardNumber();
+    }
+    return cardNumber;
+  }
+
+  async addCard({ userId, name, surname }: ICreateCard): Promise<Card> {
     let currentDate = new Date();
     currentDate.setFullYear(currentDate.getFullYear() + 5);
     const cardData: CreateCardDTO = {
       name,
       surname,
       cvv: this.generateRandomNumber(3).toString(),
-      cardNumber: this.generateRandomNumber(16).toString(),
+      cardNumber: this.generateCardNumber(),
       userId,
       expirationDate: currentDate,
       currency: Currency.USD,
@@ -71,10 +90,20 @@ export class ClientCardService {
     return cardList;
   }
 
-  async getCard(id: number, userId: number) {
+  async getCard({ id, userId }) {
+    const cacheCard: Card = await this.cacheManager.get(
+      reddisHelper.cardKey(id),
+    );
+
+    if (cacheCard && cacheCard.userId === userId) {
+      return cacheCard;
+    }
+
     const card = await this.cardRepository.findOne({ where: { id } });
+
     if (!card) throw new NotFoundException({ message: 'Card not found' });
     if (card.userId === userId) {
+      await this.cacheManager.set(reddisHelper.cardKey(card.id), card);
       return card;
     } else {
       throw new Error('its not your card');
@@ -84,6 +113,7 @@ export class ClientCardService {
   async getCardTransactions(cardId: number) {
     const card = await this.cardRepository.findOne({ where: { id: cardId } });
     const transactions = card.transactions;
+
     const resultTransaction = [];
     for (const transactionId of transactions) {
       const transaction = await this.transactionRepository.findOne({
@@ -98,34 +128,42 @@ export class ClientCardService {
     cardNumber: string,
     userId: number,
   ): Promise<Card | null> {
+    const cacheCard: Card = await this.cacheManager.get(
+      `card-cardNumber-${cardNumber}`,
+    );
+    if (cacheCard && cacheCard.userId === userId) return cacheCard;
     const card = await this.cardRepository.findOne({
       where: { cardNumber, userId },
     });
+
+    await this.cacheManager.set(`card-cardNumber-${cardNumber}`, card);
+
     return card || null;
   }
 
-  async verifyCardOwnership(userId: number, cardId: number): Promise<boolean> {
-    const card = await this.getCard(cardId, userId);
-    if (!card) return false;
-    return true;
+  async verifyCard({ userId, cardId }) {
+    const card = await this.getCard({ id: cardId, userId });
+
+    if (!card || card.status === CardStatus.BLOCKED)
+      throw new BadRequestException({
+        message: "It's not your card or Card is blocked",
+      });
+
+    return card;
   }
 
-  async sendMoneyByCardsId(
-    userId: number,
-    amount: number,
-    senderCardId: number,
-    receiverCardNumber: string,
-    currency: Currency,
-  ) {
+  async sendMoney({
+    userId,
+    amount,
+    senderCardId,
+    receiverCardNumber,
+    currency,
+  }: ISendData) {
     if (!senderCardId)
       throw new BadRequestException({ message: "SenderCardId can't be empty" });
 
-    const validate = await this.verifyCardOwnership(userId, senderCardId);
+    const senderCard = await this.verifyCard({ cardId: senderCardId, userId });
 
-    if (!validate)
-      throw new BadRequestException({ message: "It isn't your card" });
-
-    const senderCard = await this.getCard(senderCardId, userId);
     const receiverCard = await this.getCardByCardNumber(
       receiverCardNumber,
       userId,
@@ -161,6 +199,7 @@ export class ClientCardService {
     senderCard.transactions.push(transaction.id);
 
     await this.cardRepository.save(senderCard);
+    await this.cacheManager.del(reddisHelper.cardKey(senderCard.id));
     return transaction;
   }
 
@@ -174,11 +213,14 @@ export class ClientCardService {
     setTimeout(async () => {
       receiverCard.balance = receiverCard.balance + transaction.amount;
       receiverCard.transactions.push(transaction.id);
-      await this.transactionService.setStatusTransaction(
-        transaction.id,
-        TransactionStatuses.COMPLETED,
-      );
+      await this.transactionService.setStatusTransaction({
+        transactionId: transaction.id,
+        status: TransactionStatuses.COMPLETED,
+      });
+
       await this.cardRepository.save(receiverCard);
+      await this.cacheManager.del(reddisHelper.cardKey(receiverCard.id));
+      return;
     }, randomTimeForTimeout);
   }
 
@@ -192,19 +234,13 @@ export class ClientCardService {
     return status;
   }
 
-  async depositByCardNumber(
-    userId: number,
-    cardNumber: string,
-    amount: number,
-    currency: Currency,
-  ) {
-    const card = await this.getCardByCardNumber(cardNumber, userId);
-    if (!card) throw new NotFoundException({ message: 'Card not found' });
-
+  async deposit({ userId, cardId, amount, currency }: IDepositData) {
+    const card = await this.verifyCard({ cardId, userId });
     const validateCurrency = await this.validateCurrency([
       currency,
       card.currency,
     ]);
+
     if (!validateCurrency)
       throw new BadRequestException({
         message: 'Currency is different',
@@ -213,7 +249,7 @@ export class ClientCardService {
       });
 
     const transaction = await this.transactionService.createTransaction({
-      receiverCardNumber: cardNumber,
+      receiverCardNumber: card.cardNumber,
       amount,
       currency,
       status: TransactionStatuses.ACTIVE,
@@ -222,6 +258,7 @@ export class ClientCardService {
     card.transactions.push(transaction.id);
 
     await this.cardRepository.save(card);
+    await this.cacheManager.del(reddisHelper.cardKey(card.id));
 
     return transaction;
   }

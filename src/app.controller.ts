@@ -1,12 +1,10 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller } from '@nestjs/common';
+import { Card } from './common/entities/card.entity';
+import { ApiExtraModels } from '@nestjs/swagger';
+import { User } from './common/entities/user.entity';
+import { Admin } from './admin/entities/admin.entity';
+import { Transaction } from './common/entities/transaction.entity';
 
 @Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-}
+@ApiExtraModels(Card, User, Admin, Transaction)
+export class AppController {}
