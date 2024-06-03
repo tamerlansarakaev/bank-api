@@ -16,8 +16,12 @@ import {
 } from 'src/common/entities/transaction.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Admin')
 @Controller('admin/transactions')
+@ApiBearerAuth()
+@ApiResponse({ status: 401, description: 'Unauthorized' })
 export class AdminTransactionController {
   constructor(
     private transactionService: AdminTransactionService,
@@ -26,6 +30,7 @@ export class AdminTransactionController {
   ) {}
 
   @Get()
+  @ApiResponse({ status: 200, description: 'Return all Transactions',type:[Transaction] })
   async getAllTransactions(@Res() res: Response) {
     try {
       const transactions = await this.transactionService.getAllTransactions();
@@ -36,6 +41,7 @@ export class AdminTransactionController {
   }
 
   @Patch(':id/confirm')
+  @ApiResponse({ status: 200, description: 'Transaction confirmed' })
   async confirmTransaction(
     @Param('id', ParseIntPipe) transactionId: number,
     @Res() res: Response,
@@ -51,6 +57,7 @@ export class AdminTransactionController {
   }
 
   @Patch(':id/reject')
+  @ApiResponse({ status: 200, description: 'Transaction rejected' })
   async rejectTransaction(
     @Param('id', ParseIntPipe) transactionId: number,
     @Res() res: Response,

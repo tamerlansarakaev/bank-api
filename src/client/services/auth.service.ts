@@ -8,7 +8,7 @@ import { ClientUserService } from 'src/client/services/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/common/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
-import { SignUpDto } from '../../common/dto/signUp.dto';
+import { SignUpDto } from '../../common/dto/auth/signUp.dto';
 import { jwtConstants } from 'src/common/constants';
 
 @Injectable()
@@ -33,10 +33,10 @@ export class AuthService {
     };
   }
 
-  async signIn(
-    email: string,
-    pass: string,
-  ): Promise<{ access_token: string; refresh_token: string }> {
+  async signIn({
+    email,
+    pass,
+  }): Promise<{ access_token: string; refresh_token: string }> {
     try {
       const user = await this.userService.getUserByEmail(email);
       if (!user)

@@ -1,15 +1,19 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
 import { errorMessages } from 'src/common/constants';
 import { Card } from 'src/common/entities/card.entity';
 import {
   Transaction,
   TransactionStatuses,
 } from 'src/common/entities/transaction.entity';
+import { reddisHelper } from 'src/common/utils/reddis';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -18,17 +22,18 @@ export class AdminTransactionService {
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
     @InjectRepository(Card) private cardRepository: Repository<Card>,
+
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async getAllTransactions(): Promise<Array<Transaction>> {
-    const transactions = await this.transactionRepository.find();
-    if (!transactions)
+    const transactions = await this.transactionRepository.find({ cache: true });
+    if (!transactions.length)
       throw new NotFoundException({ message: 'Transactions not found' });
-
     return transactions;
   }
 
-  async confirmTransaction(transactionId) {
+  async confirmTransaction(transactionId: number) {
     const { RECEIVER_CARD_NOT_FOUND, TRANSACTION_NOT_FOUND } = errorMessages;
     const transaction = await this.transactionRepository.findOne({
       where: { id: transactionId },
@@ -72,6 +77,10 @@ export class AdminTransactionService {
       id: transactionId,
       status,
     });
+
+    await this.cacheManager.del(
+      reddisHelper.transactionKey(updatedTransaction.id),
+    );
     return updatedTransaction;
   }
 }
