@@ -21,6 +21,14 @@ export class ClientTransactionController {
     @Res() res,
   ) {
     try {
-    } catch {}
+      const { id } = req.user;
+      const transaction = this.transactionsService.getTransactionById(
+        transactionId,
+        id,
+      );
+      return res.status(200).json(transaction);
+    } catch (error) {
+      return res.status(error.status || 401).json({ message: error.message });
+    }
   }
 }

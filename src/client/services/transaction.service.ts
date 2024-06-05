@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
 import { CreateTransactionDto } from 'src/common/dto/create-transaction.dto';
@@ -7,12 +13,15 @@ import {
   TransactionStatuses,
 } from 'src/common/entities/transaction.entity';
 import { Repository } from 'typeorm';
+import { ClientUserService } from './user.service';
 
 @Injectable()
 export class ClientTransactionService {
   constructor(
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
+    @Inject(forwardRef(() => ClientUserService))
+    private userService: ClientUserService,
   ) {}
 
   async createTransaction(transactionData: CreateTransactionDto) {
@@ -50,5 +59,22 @@ export class ClientTransactionService {
     transaction.status = status;
 
     return await this.transactionRepository.save(transaction);
+  }
+
+  async getTransactionById(transactionId, id) {
+    const user = await this.userService.getProfile(id);
+    const transaction = await this.transactionRepository.findOne({
+      where: [{ id: transactionId }],
+    });
+
+    for (let card of user.cardList) {
+      if (card.transactions.includes(transaction.id)) {
+        return transaction;
+      }
+    }
+
+    throw new UnauthorizedException({
+      message: "You don't have permissions for transaction",
+    });
   }
 }

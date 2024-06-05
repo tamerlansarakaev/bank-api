@@ -6,11 +6,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientUserModule } from 'src/client/modules/user.module';
 import { User } from 'src/common/entities/user.entity';
 import { Transaction } from 'src/common/entities/transaction.entity';
-import { CleintTransactionModule } from './transaction.module';
+import { ClientTransactionModule } from './transaction.module';
 
 @Module({
   imports: [
-    CleintTransactionModule,
+    forwardRef(() => ClientTransactionModule),
     forwardRef(() => ClientUserModule),
     TypeOrmModule.forFeature([Card, User, Transaction]),
   ],

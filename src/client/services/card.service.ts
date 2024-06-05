@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Card, Currency } from '../../common/entities/card.entity';
@@ -21,6 +23,7 @@ export class ClientCardService {
     @InjectRepository(Card) private cardRepository: Repository<Card>,
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
+    @Inject(forwardRef(() => ClientTransactionService))
     private transactionService: ClientTransactionService,
   ) {}
 
@@ -83,6 +86,7 @@ export class ClientCardService {
 
   async getCardTransactions(cardId: number) {
     const card = await this.cardRepository.findOne({ where: { id: cardId } });
+    if (!card) throw new NotFoundException({ message: 'Card not found' });
     const transactions = card.transactions;
     const resultTransaction = [];
     for (const transactionId of transactions) {
