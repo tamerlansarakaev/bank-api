@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { User } from '../../common/entities/user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,12 +7,17 @@ import * as bcrypt from 'bcrypt';
 import { validate } from 'class-validator';
 import { ClientCardService } from 'src/client/services/card.service';
 import { configHash } from 'src/common/constants';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { reddisHelper } from 'src/common/utils/reddis';
+import { Card } from 'src/common/entities/card.entity';
 
 @Injectable()
 export class ClientUserService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly cardService: ClientCardService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async getUserByEmail(email: string) {
@@ -45,9 +50,32 @@ export class ClientUserService {
   }
 
   async getProfile(id) {
+    const cacheUser: User = await this.cacheManager.get(
+      reddisHelper.userKey(id),
+    );
+
+    if (cacheUser) {
+      const cardList = await this.cardService.getCardsByCardId(
+        cacheUser.cardList,
+      );
+      const totalBalance = await this.getBalance(cardList);
+      const errors = await validate(id).then((errors) =>
+        errors.map((error) => error.constraints),
+      );
+      if (errors.length) throw new BadRequestException({ errors: errors });
+      return { ...cacheUser, cardList: cardList, balance: totalBalance };
+    }
+
     const userProfile = await this.usersRepository.findOne({ where: { id } });
-    const cardList = await this.cardService.getCardsByCardId(userProfile.cardList);
-    const totalBalance = await this.getBalance(id);
+    await this.cacheManager.set(
+      reddisHelper.userKey(userProfile.id),
+      userProfile,
+    );
+
+    const cardList = await this.cardService.getCardsByCardId(
+      userProfile.cardList,
+    );
+    const totalBalance = await this.getBalance(cardList);
     const errors = await validate(id).then((errors) =>
       errors.map((error) => error.constraints),
     );
@@ -55,10 +83,8 @@ export class ClientUserService {
     return { ...userProfile, cardList: cardList, balance: totalBalance };
   }
 
-  async getBalance(id) {
-    const user = await this.usersRepository.findOne({ where: { id } });
-    const cards = await this.cardService.getCardsByCardId(user.cardList);
-    const totalBalance = cards.reduce(
+  async getBalance(cardList: Card[]) {
+    const totalBalance = cardList.reduce(
       (totalBalance, card) => totalBalance + card.balance,
       0,
     );

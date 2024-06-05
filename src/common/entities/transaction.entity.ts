@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Currency } from './card.entity';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum TransactionTypes {
   SEND = 'Send',
@@ -22,20 +23,25 @@ export enum TransactionStatuses {
 @Entity()
 export class Transaction {
   @PrimaryGeneratedColumn()
+  @ApiProperty()
   id: number;
 
   @Column()
   @IsInt()
+  @ApiProperty()
   amount: number;
 
   @Column()
   @IsNotEmpty()
+  @ApiProperty()
   currency: Currency;
 
-  @Column()
-  senderCardNumber: string;
+  @Column({ default: null })
+  @ApiPropertyOptional()
+  senderCardNumber: string | null;
 
   @Column()
+  @ApiProperty()
   receiverCardNumber: string;
 
   @Column({
@@ -43,17 +49,21 @@ export class Transaction {
     enum: TransactionStatuses,
     default: TransactionStatuses.PENDING,
   })
+  @ApiProperty()
   @IsNotEmpty()
   status: TransactionStatuses;
 
-  @Column({ default: null })
-  statusMessage: string | null;
+  @Column({ default: '' })
+  @ApiPropertyOptional()
+  statusMessage?: string;
 
   @Column()
+  @ApiProperty()
   type: TransactionTypes;
 
   @Column({ default: new Date() })
   @IsDate()
   @UpdateDateColumn()
+  @ApiProperty()
   date: Date;
 }

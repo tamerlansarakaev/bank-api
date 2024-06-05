@@ -4,7 +4,11 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ClientModule } from './client/modules/client.module';
-import { AdminModule } from './admin/admin.module';
+import { AdminModule } from './admin/modules/admin.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ClientGuard } from './common/guards/client.guard';
+import { AdminGuard } from './common/guards/admin.guard';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -20,10 +24,16 @@ import { AdminModule } from './admin/admin.module';
       synchronize: true,
       ssl: true,
     }),
+    CacheModule.register({ isGlobal: true }),
     ClientModule,
     AdminModule,
   ],
+
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ClientGuard },
+    { provide: APP_GUARD, useClass: AdminGuard },
+  ],
 })
 export class AppModule {}

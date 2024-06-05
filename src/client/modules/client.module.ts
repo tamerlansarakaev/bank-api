@@ -1,4 +1,4 @@
-import { Module, UseGuards } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ClientUserModule } from './user.module';
 import { ClientCardModule } from './card.module';
 import { ClientAuthModule } from './auth.module';
