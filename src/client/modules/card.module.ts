@@ -10,7 +10,7 @@ import { ClientTransactionModule } from './transaction.module';
 
 @Module({
   imports: [
-    ClientTransactionModule,
+    forwardRef(() => ClientTransactionModule),
     forwardRef(() => ClientUserModule),
     TypeOrmModule.forFeature([Card, User, Transaction]),
   ],
