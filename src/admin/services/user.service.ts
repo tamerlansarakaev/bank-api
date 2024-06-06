@@ -3,7 +3,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
 import { User } from 'src/common/entities/user.entity';
-import { reddisHelper } from 'src/common/utils/reddis';
+import { cacheHelper } from 'src/common/utils/cache';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -19,11 +19,11 @@ export class AdminUserService {
   }
 
   async getUserById(id) {
-    const cacheUser = await this.cacheManager.get(reddisHelper.userKey(id));
+    const cacheUser = await this.cacheManager.get(cacheHelper.userKey(id));
     if (cacheUser) return cacheUser;
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) throw new NotFoundException({ message: 'User not found' });
-    await this.cacheManager.set(reddisHelper.userKey(id), user);
+    await this.cacheManager.set(cacheHelper.userKey(id), user);
     return user;
   }
 }

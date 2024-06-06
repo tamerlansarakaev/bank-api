@@ -9,7 +9,7 @@ import { ClientCardService } from 'src/client/services/card.service';
 import { configHash } from 'src/common/constants';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { reddisHelper } from 'src/common/utils/reddis';
+import { cacheHelper } from 'src/common/utils/cache';
 import { Card } from 'src/common/entities/card.entity';
 
 @Injectable()
@@ -51,7 +51,7 @@ export class ClientUserService {
 
   async getProfile(id) {
     const cacheUser: User = await this.cacheManager.get(
-      reddisHelper.userKey(id),
+      cacheHelper.userKey(id),
     );
 
     if (cacheUser) {
@@ -68,7 +68,7 @@ export class ClientUserService {
 
     const userProfile = await this.usersRepository.findOne({ where: { id } });
     await this.cacheManager.set(
-      reddisHelper.userKey(userProfile.id),
+      cacheHelper.userKey(userProfile.id),
       userProfile,
     );
 

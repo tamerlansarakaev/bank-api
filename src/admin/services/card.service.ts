@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
 import { Card, CardStatus } from 'src/common/entities/card.entity';
 import { maskCardNumber } from 'src/common/utils/maskCardNumber';
-import { reddisHelper } from 'src/common/utils/reddis';
+import { cacheHelper } from 'src/common/utils/cache';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -28,7 +28,7 @@ export class AdminCardService {
 
   async getCardById(id: number) {
     const cacheCard: Card = await this.cacheManager.get(
-      reddisHelper.cardKey(id),
+      cacheHelper.cardKey(id),
     );
     if (cacheCard) {
       return cacheCard;
@@ -36,7 +36,7 @@ export class AdminCardService {
     const card = await this.cardRepository.findOne({ where: { id } });
     card.cardNumber = maskCardNumber(card.cardNumber);
     card.cvv = '***';
-    await this.cacheManager.set(reddisHelper.cardKey(id), card);
+    await this.cacheManager.set(cacheHelper.cardKey(id), card);
     if (!card) throw new NotFoundException({ message: 'Card not found' });
     return card;
   }

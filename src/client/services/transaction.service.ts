@@ -9,7 +9,7 @@ import {
   TransactionStatuses,
 } from 'src/common/entities/transaction.entity';
 import { ISetTransactionStatus } from 'src/common/interfaces/setTransactionStatus';
-import { reddisHelper } from 'src/common/utils/reddis';
+import { cacheHelper } from 'src/common/utils/cache';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -46,7 +46,7 @@ export class ClientTransactionService {
       await this.transactionRepository.save(transaction);
 
     await this.cacheManager.set(
-      reddisHelper.transactionKey(createdTransaction.id),
+      cacheHelper.transactionKey(createdTransaction.id),
       createdTransaction,
     );
 
@@ -58,7 +58,7 @@ export class ClientTransactionService {
       where: { id: transactionId },
     });
     transaction.status = status;
-    await this.cacheManager.del(reddisHelper.transactionKey(transaction.id));
+    await this.cacheManager.del(cacheHelper.transactionKey(transaction.id));
     return await this.transactionRepository.save(transaction);
   }
 }

@@ -20,7 +20,7 @@ import { Cache } from 'cache-manager';
 import { IDepositData } from 'src/common/interfaces/depositData';
 import { ISendData } from 'src/common/interfaces/sendData';
 import { ICreateCard } from 'src/common/interfaces/createCardData';
-import { reddisHelper } from 'src/common/utils/reddis';
+import { cacheHelper } from 'src/common/utils/cache';
 
 @Injectable()
 export class ClientCardService {
@@ -92,7 +92,7 @@ export class ClientCardService {
 
   async getCard({ id, userId }) {
     const cacheCard: Card = await this.cacheManager.get(
-      reddisHelper.cardKey(id),
+      cacheHelper.cardKey(id),
     );
 
     if (cacheCard && cacheCard.userId === userId) {
@@ -103,7 +103,7 @@ export class ClientCardService {
 
     if (!card) throw new NotFoundException({ message: 'Card not found' });
     if (card.userId === userId) {
-      await this.cacheManager.set(reddisHelper.cardKey(card.id), card);
+      await this.cacheManager.set(cacheHelper.cardKey(card.id), card);
       return card;
     } else {
       throw new Error('its not your card');
@@ -199,7 +199,7 @@ export class ClientCardService {
     senderCard.transactions.push(transaction.id);
 
     await this.cardRepository.save(senderCard);
-    await this.cacheManager.del(reddisHelper.cardKey(senderCard.id));
+    await this.cacheManager.del(cacheHelper.cardKey(senderCard.id));
     return transaction;
   }
 
@@ -219,7 +219,7 @@ export class ClientCardService {
       });
 
       await this.cardRepository.save(receiverCard);
-      await this.cacheManager.del(reddisHelper.cardKey(receiverCard.id));
+      await this.cacheManager.del(cacheHelper.cardKey(receiverCard.id));
       return;
     }, randomTimeForTimeout);
   }
@@ -258,7 +258,7 @@ export class ClientCardService {
     card.transactions.push(transaction.id);
 
     await this.cardRepository.save(card);
-    await this.cacheManager.del(reddisHelper.cardKey(card.id));
+    await this.cacheManager.del(cacheHelper.cardKey(card.id));
 
     return transaction;
   }

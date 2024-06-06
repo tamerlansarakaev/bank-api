@@ -13,7 +13,7 @@ import {
   Transaction,
   TransactionStatuses,
 } from 'src/common/entities/transaction.entity';
-import { reddisHelper } from 'src/common/utils/reddis';
+import { cacheHelper } from 'src/common/utils/cache';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -79,7 +79,7 @@ export class AdminTransactionService {
     });
 
     await this.cacheManager.del(
-      reddisHelper.transactionKey(updatedTransaction.id),
+      cacheHelper.transactionKey(updatedTransaction.id),
     );
     return updatedTransaction;
   }
