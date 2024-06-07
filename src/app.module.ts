@@ -23,6 +23,7 @@ import { CacheModule } from '@nestjs/cache-manager';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
       ssl: true,
+      
     }),
     CacheModule.register({ isGlobal: true }),
     ClientModule,
