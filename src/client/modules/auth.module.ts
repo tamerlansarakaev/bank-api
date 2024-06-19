@@ -20,4 +20,4 @@ import { jwtConstants } from 'src/common/constants';
   providers: [AuthService],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class ClientAuthModule {}

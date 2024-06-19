@@ -1,5 +1,11 @@
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+  forwardRef,
+} from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
 import { validate } from 'class-validator';
@@ -11,12 +17,15 @@ import {
 import { ISetTransactionStatus } from 'src/common/interfaces/setTransactionStatus';
 import { cacheHelper } from 'src/common/utils/cache';
 import { Repository } from 'typeorm';
+import { ClientUserService } from './user.service';
 
 @Injectable()
 export class ClientTransactionService {
   constructor(
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
+    @Inject(forwardRef(() => ClientUserService))
+    private userService: ClientUserService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
@@ -60,5 +69,22 @@ export class ClientTransactionService {
     transaction.status = status;
     await this.cacheManager.del(cacheHelper.transactionKey(transaction.id));
     return await this.transactionRepository.save(transaction);
+  }
+
+  async getTransactionById(transactionId, id) {
+    const user = await this.userService.getProfile(id);
+    const transaction = await this.transactionRepository.findOne({
+      where: [{ id: transactionId }],
+    });
+
+    for (let card of user.cardList) {
+      if (card.transactions.includes(transaction.id)) {
+        return transaction;
+      }
+    }
+
+    throw new UnauthorizedException({
+      message: "You don't have permissions for transaction",
+    });
   }
 }
