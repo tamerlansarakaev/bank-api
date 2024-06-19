@@ -10,7 +10,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SignInAdminDto } from '../dto/sign-in-admin.dto';
-import * as bcrypt from 'bcrypt';
+import * as bcryptjs from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { AdminDto } from '../dto/admin.dto';
 import { configHash, jwtConstants } from 'src/common/constants';
@@ -54,7 +54,7 @@ export class AdminAuthService {
 
   async signUp(signUpData: SignUpAdminDto) {
     const admin = new Admin();
-    const hashedPassword = await bcrypt.hash(
+    const hashedPassword = await bcryptjs.hash(
       signUpData.password,
       configHash.hashSalt,
     );
@@ -96,7 +96,7 @@ export class AdminAuthService {
       throw new NotFoundException({
         message: `Account with username: ${username} not found`,
       });
-    const comparePassword = await bcrypt.compare(password, admin.password);
+    const comparePassword = await bcryptjs.compare(password, admin.password);
     if (!comparePassword)
       throw new UnauthorizedException({ message: 'Wrong password' });
 
