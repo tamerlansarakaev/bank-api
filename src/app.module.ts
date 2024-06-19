@@ -22,8 +22,6 @@ import { CacheModule } from '@nestjs/cache-manager';
       database: process.env.POSTGRES_DATABASE,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
-      ssl: true,
-      
     }),
     CacheModule.register({ isGlobal: true }),
     ClientModule,

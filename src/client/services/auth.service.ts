@@ -7,7 +7,7 @@ import {
 import { ClientUserService } from 'src/client/services/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/common/dto/create-user.dto';
-import * as bcrypt from 'bcrypt';
+import * as bcryptjs from 'bcryptjs';
 import { SignUpDto } from '../../common/dto/auth/signUp.dto';
 import { jwtConstants } from 'src/common/constants';
 
@@ -44,7 +44,7 @@ export class AuthService {
           message: `User with Email: ${email} not found`,
         });
 
-      const comparePassword = await bcrypt.compare(pass, user.password);
+      const comparePassword = await bcryptjs.compare(pass, user.password);
       if (!comparePassword) {
         throw new UnauthorizedException('Password is incorrect');
       }

@@ -1,10 +1,13 @@
-FROM node:21.7.3-alpine3.20
+FROM node:20.11.0-alpine3.18
 
 WORKDIR /app
 
+COPY package*.json ./
+
 COPY . .
+
 RUN npm install
 
 EXPOSE 3000
 
-ENTRYPOINT ["npm", "run", "start:prod"]
+CMD ["npm", "run", "start"]
