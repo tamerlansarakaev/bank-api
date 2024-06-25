@@ -35,6 +35,6 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            docker pull tima011104/first-bank-backend:latest
             cd first-bank-backend
-            docker-compose up -d --build
+            docker pull tima011104/first-bank-backend:latest
+            docker-compose up -d
