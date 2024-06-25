@@ -2,12 +2,14 @@ version: '3'
 services:
   app:
     build: .
-    image: tima011104/first-bank-backend:latest
+    image: tima011104/first-bank-backend:v1.0.0
     ports:
       - "3000:3000"
+    networks:
+      - app_network
     environment:
       NODE_ENV: production
-      POSTGRES_HOST: localhost
+      POSTGRES_HOST: db
       DB_PORT: 5432
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -21,7 +23,13 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app_network
 
 volumes:
   pgdata:
     driver: local
+
+networks:
+  app_network:
+    driver: bridge
