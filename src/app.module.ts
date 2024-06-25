@@ -9,6 +9,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ClientGuard } from './common/guards/client.guard';
 import { AdminGuard } from './common/guards/admin.guard';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ChatGateway } from './common/socket/chat.gateway';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CacheModule } from '@nestjs/cache-manager';
   controllers: [AppController],
   providers: [
     AppService,
+    ChatGateway,
     { provide: APP_GUARD, useClass: ClientGuard },
     { provide: APP_GUARD, useClass: AdminGuard },
   ],
