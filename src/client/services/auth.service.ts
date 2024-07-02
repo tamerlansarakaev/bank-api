@@ -20,7 +20,10 @@ export class AuthService {
 
   async getTokens(id, email) {
     const [at, rt] = await Promise.all([
-      this.jwtService.signAsync({ id, email }, { secret: jwtConstants.secret }),
+      this.jwtService.signAsync(
+        { id, email },
+        { secret: jwtConstants.secret, expiresIn: '7d' },
+      ),
       this.jwtService.signAsync(
         { id, email },
         { secret: jwtConstants.refreshToken, expiresIn: '7d' },

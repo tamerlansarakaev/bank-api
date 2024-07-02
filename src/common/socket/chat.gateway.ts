@@ -7,7 +7,12 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { IRoomMessage } from '../interfaces/WebSocket';
-import { JwtService } from '@nestjs/jwt';
+import { ChatService } from 'src/client/services/chat.service';
+
+export enum SocketRoles {
+  CLIENT = 'Client',
+  AI_ASSISTANT = 'AI Assistant',
+}
 
 @WebSocketGateway({
   cors: {
@@ -17,38 +22,64 @@ import { JwtService } from '@nestjs/jwt';
   },
 })
 export class ChatGateway {
-  constructor(private jwtService: JwtService) {}
+  constructor(private chatService: ChatService) {}
   @WebSocketServer()
   server: Server;
 
   @SubscribeMessage('join')
-  handleJoinRoom(
+  async handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() room: string,
+    @MessageBody() { token },
   ) {
-    const adapter = this.server.sockets.adapter;
-    const roomExists = adapter.rooms.has(room);
-    console.log(client.rooms);
-    if (roomExists) {
-      console.log('Error');
-      return this.server.emit('message', 'Entry is prohibited for you');
+    const chatSession = await this.chatService.connect(token);
+    if (!chatSession || !chatSession.userId) {
+      return client.emit('error', `Something happened wrong`);
     }
+    const room = String(new Date().getTime());
     client.join(room);
-    return { room, id: client.id };
+    client.emit('joined', {
+      message: 'Successful connected',
+      role: SocketRoles.AI_ASSISTANT,
+      room,
+      userId: chatSession.userId,
+      session: chatSession.session,
+    });
   }
 
   @SubscribeMessage('roomMessage')
-  handleRoomMessage(
+  async handleRoomMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: IRoomMessage,
   ) {
+    if (!data.session || !data.message.length || !data.userId) {
+      return client.emit('error', {
+        message: 'One of important field is empty',
+        receiverData: {
+          message: data.message,
+          userId: data.userId,
+        },
+      });
+    }
+
     this.server.to(data.room).emit('roomMessage', {
+      id: client.id,
+      message: data.message,
+      userId: data.userId,
+      room: data.room,
+      role: SocketRoles.CLIENT,
+    });
+
+    const aiMessage = await this.chatService.handleSendMessage(
+      data.token,
+      data.message,
+    );
+    this.server.to(data.room).emit('aiMessage', {
+      role: SocketRoles.AI_ASSISTANT,
+      message: aiMessage,
       room: data.room,
       id: client.id,
-      jwtToken: data.jwtToken,
-      message: data.message,
     });
-    
+    return;
   }
 
   @SubscribeMessage('leave')
