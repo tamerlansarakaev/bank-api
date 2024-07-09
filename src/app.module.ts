@@ -9,7 +9,6 @@ import { APP_GUARD } from '@nestjs/core';
 import { ClientGuard } from './common/guards/client.guard';
 import { AdminGuard } from './common/guards/admin.guard';
 import { CacheModule } from '@nestjs/cache-manager';
-import { ChatModule } from './client/modules/chat.module';
 
 @Module({
   imports: [
@@ -27,7 +26,6 @@ import { ChatModule } from './client/modules/chat.module';
     CacheModule.register({ isGlobal: true }),
     ClientModule,
     AdminModule,
-    ChatModule,
   ],
 
   controllers: [AppController],

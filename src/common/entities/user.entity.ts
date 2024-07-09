@@ -39,7 +39,7 @@ export class User {
   @ApiProperty()
   cardList: number[];
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'jsonb', default: [] })
   @ApiProperty()
   chatList: number[];
 }

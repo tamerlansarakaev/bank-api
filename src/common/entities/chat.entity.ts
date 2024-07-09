@@ -1,6 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { ChatMessage } from '../interfaces/ChatMessage';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Chat {
@@ -10,13 +14,12 @@ export class Chat {
 
   @Column()
   @ApiProperty()
-  userId: number;
+  creatorId: number;
 
-  @Column()
+  @Column({ type: 'jsonb', default: [] })
   @ApiProperty()
-  room: string;
+  messages: number[];
 
-  @Column({ type: 'jsonb' })
-  @ApiProperty()
-  messageList: Array<ChatMessage>;
+  @CreateDateColumn()
+  createdAt: Date;
 }

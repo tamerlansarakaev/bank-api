@@ -4,15 +4,15 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { IRoomMessage } from '../interfaces/WebSocket';
+import { IRoomMessage } from '../interfaces/roomMessage';
 import { ChatService } from 'src/client/services/chat.service';
-
-export enum SocketRoles {
-  CLIENT = 'Client',
-  AI_ASSISTANT = 'AI Assistant',
-}
+import { UseGuards } from '@nestjs/common';
+import { CustomSocket, WsAuthGuard } from '../guards/ws.guard';
+import { Message, SocketRoles } from '../entities/message.entity';
+import { validateEntityData } from '../utils/errorValidate';
 
 @WebSocketGateway({
   cors: {
@@ -21,69 +21,162 @@ export enum SocketRoles {
     credentials: true,
   },
 })
+@UseGuards(WsAuthGuard)
 export class ChatGateway {
   constructor(private chatService: ChatService) {}
   @WebSocketServer()
   server: Server;
 
+  async handleConnection(client: Socket) {
+    try {
+      const authToken = client.handshake.auth.token;
+      const decoded = await this.chatService.validateJWT(authToken);
+
+      if (!authToken || !decoded) {
+        throw new WsException('Missing token');
+      }
+      client['userId'] = decoded.id;
+    } catch (err) {
+      client.emit('error', new WsException(err));
+      client.disconnect();
+    }
+  }
+
+  @SubscribeMessage('create-chat')
+  async createChat(@ConnectedSocket() client: CustomSocket) {
+    try {
+      const userId = client.userId;
+      const createdChat = await this.chatService.createChat(userId);
+      await this.handleJoinRoom(client, { chatId: createdChat.id });
+      await this.handleGetChats(client);
+    } catch (error) {
+      client.emit('error', new WsException(error));
+    }
+  }
+
   @SubscribeMessage('join')
   async handleJoinRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() { token },
+    @ConnectedSocket() client: CustomSocket,
+    @MessageBody() { chatId },
   ) {
-    const chatSession = await this.chatService.connect(token);
-    if (!chatSession || !chatSession.userId) {
-      return client.emit('error', `Something happened wrong`);
+    try {
+      const userId = client.userId;
+      await this.chatService.validateChat(userId, chatId);
+      const chat = await this.chatService.getChatById(chatId, userId);
+      if (!chatId) {
+        return client.emit(
+          'error',
+          'chatId field is important for join to chat',
+        );
+      }
+      await this.chatService.connect(userId);
+      client.join(chatId);
+
+      const messages = await this.chatService.getChatMessages({
+        chatId,
+        messagesId: chat.messages,
+      });
+
+      return client.emit('joined', {
+        chatId,
+        createdAt: chat.createdAt,
+        userId,
+        messages,
+      });
+    } catch (error) {
+      client.emit('error', new WsException(error.message));
     }
-    const room = String(new Date().getTime());
-    client.join(room);
-    client.emit('joined', {
-      message: 'Successful connected',
-      role: SocketRoles.AI_ASSISTANT,
-      room,
-      userId: chatSession.userId,
-      session: chatSession.session,
-    });
   }
 
   @SubscribeMessage('roomMessage')
   async handleRoomMessage(
-    @ConnectedSocket() client: Socket,
+    @ConnectedSocket() client: CustomSocket,
     @MessageBody() data: IRoomMessage,
   ) {
-    if (!data.session || !data.message.length || !data.userId) {
-      return client.emit('error', {
-        message: 'One of important field is empty',
-        receiverData: {
+    try {
+      const userId = client.userId;
+      const chat = await this.chatService.getChatById(
+        Number(data.room),
+        userId,
+      );
+      if (!chat) return;
+
+      const validate = await this.chatService.validateChat(
+        userId,
+        Number(data.room),
+      );
+      if (validate) {
+        client.join(data.room);
+      }
+      const validateAccess = client.rooms.has(data.room);
+      if (!validateAccess)
+        throw new WsException(
+          `You doesn't have access to send message to chat: ${data.room}`,
+        );
+
+      const userMessageData = {
+        message: data.message,
+        userId: data.userId,
+        room: data.room,
+        role: SocketRoles.CLIENT,
+      };
+
+      const updatedUserMessageData = {
+        chatId: Number(userMessageData.room),
+        senderId: userMessageData.userId,
+        message: userMessageData.message,
+      };
+
+      const userMessage = new Message();
+
+      Object.assign(userMessage, { ...updatedUserMessageData });
+      this.server.to(data.room).emit('roomMessage', userMessageData);
+      const validateUserMessage = await validateEntityData(userMessage);
+
+      if (validateUserMessage) {
+        throw new WsException({ validateUserMessage });
+      }
+
+      const aiMessage = await this.chatService
+        .handleSendMessage({
+          userId,
           message: data.message,
-          userId: data.userId,
-        },
+          chatId: data.room,
+        })
+        .catch((err) => {
+          throw new WsException(err);
+        });
+      this.server.to(data.room).emit('aiMessage', {
+        role: SocketRoles.AI_ASSISTANT,
+        message: aiMessage,
+        room: data.room,
       });
+      return;
+    } catch (error) {
+      client.emit('error', new WsException(error));
     }
-
-    this.server.to(data.room).emit('roomMessage', {
-      id: client.id,
-      message: data.message,
-      userId: data.userId,
-      room: data.room,
-      role: SocketRoles.CLIENT,
-    });
-
-    const aiMessage = await this.chatService.handleSendMessage(
-      data.token,
-      data.message,
-    );
-    this.server.to(data.room).emit('aiMessage', {
-      role: SocketRoles.AI_ASSISTANT,
-      message: aiMessage,
-      room: data.room,
-      id: client.id,
-    });
-    return;
   }
 
-  @SubscribeMessage('leave')
-  handleLeaveRoom(@ConnectedSocket() client: Socket, @MessageBody() room) {
-    client.leave(room);
+  @SubscribeMessage('delete')
+  async handleLeaveRoom(
+    @ConnectedSocket() client: CustomSocket,
+    @MessageBody() room,
+  ) {
+    try {
+      const userId = client.userId;
+      await this.chatService.deleteChat(userId, room);
+      client.leave(room);
+      await this.handleGetChats(client);
+    } catch (error) {
+      client.emit('error', new WsException(error));
+    }
+  }
+
+  @SubscribeMessage('all-chats')
+  async handleGetChats(@ConnectedSocket() client: CustomSocket) {
+    const userId = client.userId;
+    if (!userId) throw new WsException(`Unauthorized`);
+    const chatList = await this.chatService.getAllChats(userId);
+    client.emit('all-chats', chatList);
   }
 }

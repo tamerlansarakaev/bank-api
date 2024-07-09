@@ -1,4 +1,4 @@
-import { SocketRoles } from "../socket/chat.gateway";
+import { SocketRoles } from "../entities/message.entity";
 
 export interface ChatMessage {
   chatId: number;

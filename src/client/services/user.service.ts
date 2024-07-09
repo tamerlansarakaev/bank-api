@@ -19,6 +19,7 @@ export interface IProfile extends Omit<User, 'cardList'> {
 @Injectable()
 export class ClientUserService {
   constructor(
+
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly cardService: ClientCardService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
