@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  IsDate,
+  IsNotEmpty,
+  IsString,
+  Length,
+  MinLength,
+} from 'class-validator';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum CardStatus {
@@ -35,7 +41,7 @@ export class Card {
   @Column({ unique: true })
   @ApiProperty()
   @IsNotEmpty()
-  @MinLength(16, { message: 'Card Number must have at least 16 digits' })
+  @Length(16)
   cardNumber: string;
 
   @Column()
