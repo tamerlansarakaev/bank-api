@@ -12,9 +12,14 @@ import { Cache } from 'cache-manager';
 import { cacheHelper } from 'src/common/utils/cache';
 import { Card } from 'src/common/entities/card.entity';
 
+export interface IProfile extends Omit<User, 'cardList'> {
+  cardList: Card[];
+  balance: number;
+}
 @Injectable()
 export class ClientUserService {
   constructor(
+
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly cardService: ClientCardService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -49,7 +54,7 @@ export class ClientUserService {
     return await this.usersRepository.save(user);
   }
 
-  async getProfile(id) {
+  async getProfile(id): Promise<IProfile> {
     const cacheUser: User = await this.cacheManager.get(
       cacheHelper.userKey(id),
     );
@@ -76,18 +81,18 @@ export class ClientUserService {
       userProfile.cardList,
     );
     const totalBalance = await this.getBalance(cardList);
-    const errors = await validate(id).then((errors) =>
-      errors.map((error) => error.constraints),
-    );
-    if (errors.length) throw new BadRequestException({ errors: errors });
+
     return { ...userProfile, cardList: cardList, balance: totalBalance };
   }
 
   async getBalance(cardList: Card[]) {
-    const totalBalance = cardList.reduce(
-      (totalBalance, card) => totalBalance + card.balance,
-      0,
-    );
-    return totalBalance;
+    if (cardList) {
+      const totalBalance = cardList.reduce(
+        (totalBalance, card) => totalBalance + card.balance,
+        0,
+      );
+      return totalBalance;
+    }
+    return 0;
   }
 }

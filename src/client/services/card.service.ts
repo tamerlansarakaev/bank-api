@@ -54,11 +54,12 @@ export class ClientCardService {
   async addCard({ userId, name, surname }: ICreateCard): Promise<Card> {
     let currentDate = new Date();
     currentDate.setFullYear(currentDate.getFullYear() + 5);
+    const cardNumber = await this.generateCardNumber()
     const cardData: CreateCardDTO = {
       name,
       surname,
       cvv: this.generateRandomNumber(3).toString(),
-      cardNumber: this.generateCardNumber(),
+      cardNumber,
       userId,
       expirationDate: currentDate,
       currency: Currency.USD,

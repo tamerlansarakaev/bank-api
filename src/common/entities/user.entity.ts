@@ -38,4 +38,8 @@ export class User {
   @Column({ type: 'jsonb' })
   @ApiProperty()
   cardList: number[];
+
+  @Column({ type: 'jsonb', default: [] })
+  @ApiProperty()
+  chatList: number[];
 }
