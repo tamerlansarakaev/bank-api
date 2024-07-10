@@ -9,10 +9,15 @@ import {
 import { Server, Socket } from 'socket.io';
 import { IRoomMessage } from '../interfaces/roomMessage';
 import { ChatService } from 'src/client/services/chat.service';
-import { UseGuards } from '@nestjs/common';
+import { Inject, UseGuards } from '@nestjs/common';
 import { CustomSocket, WsAuthGuard } from '../guards/ws.guard';
 import { Message, SocketRoles } from '../entities/message.entity';
 import { validateEntityData } from '../utils/errorValidate';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { cacheHelper } from '../utils/cache';
+import { Chat } from '../entities/chat.entity';
+import { IChat } from '../interfaces/chat';
 
 @WebSocketGateway({
   cors: {
@@ -23,7 +28,10 @@ import { validateEntityData } from '../utils/errorValidate';
 })
 @UseGuards(WsAuthGuard)
 export class ChatGateway {
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   @WebSocketServer()
   server: Server;
@@ -69,13 +77,27 @@ export class ChatGateway {
 
       const userId = client.userId;
       await this.chatService.validateChat(userId, chatId);
-      const chat = await this.chatService.getChatById(chatId, userId);
-      client.join(String(chatId));
+      const cacheKey = cacheHelper.chatKey(chatId);
+      const cachedChat: IChat = await this.cacheManager.get(cacheKey);
 
+      if (cachedChat) {
+        return client.emit('joined', {
+          chatId,
+          createdAt: cachedChat.createdAt,
+          userId,
+          messages: cachedChat.messages,
+        });
+      }
+
+      const chat = await this.chatService.getChatById(chatId, userId);
       const messages = await this.chatService.getChatMessages({
         chatId,
         messagesId: chat.messages,
       });
+
+      const cacheData = { ...chat, messages };
+
+      await this.cacheManager.set(cacheKey, cacheData);
 
       client.emit('joined', {
         chatId,
@@ -84,6 +106,7 @@ export class ChatGateway {
         messages,
       });
     } catch (error) {
+      console.error('Error:', error);
       client.emit('error', new WsException(error.message));
     }
   }
@@ -130,17 +153,26 @@ export class ChatGateway {
         throw new WsException({ validateUserMessage });
       }
 
-      const aiMessage = await this.chatService.handleSendMessage({
+      const aiMessage: any = await this.chatService.handleSendMessage({
         userId,
         message: data.message,
         chatId: data.room,
       });
+      if (typeof aiMessage === 'string') {
+        this.server.to(data.room).emit('aiMessage', {
+          role: SocketRoles.AI_ASSISTANT,
+          message: aiMessage,
+          room: data.room,
+        });
+      } else {
+        this.server.to(data.room).emit('aiMessage', {
+          role: SocketRoles.AI_ASSISTANT,
+          message: `I can't anwer to your quession`,
+          room: data.room,
+        });
+      }
 
-      this.server.to(data.room).emit('aiMessage', {
-        role: SocketRoles.AI_ASSISTANT,
-        message: aiMessage,
-        room: data.room,
-      });
+      await this.cacheManager.del(cacheHelper.chatKey(chatId));
     } catch (error) {
       client.emit('error', new WsException(error));
     }

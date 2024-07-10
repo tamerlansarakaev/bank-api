@@ -47,7 +47,11 @@ export class ChatSession {
   }
 
   async sendMessage(message: string) {
-    const result = await this.chatSession.sendMessage(message);
-    return result.response.text();
+    try {
+      const result = await this.chatSession.sendMessage(message);
+      return result.response.text();
+    } catch (error) {
+      return error;
+    }
   }
 }

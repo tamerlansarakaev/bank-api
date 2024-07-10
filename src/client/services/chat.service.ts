@@ -47,8 +47,6 @@ export class ChatService {
   }
   А;
 
-
-
   async getChatMessages({ chatId, messagesId }) {
     try {
       const messages = await this.messageService.getAllMessagesByMessagesId(
@@ -75,12 +73,21 @@ export class ChatService {
             senderId: userId,
           })
           .then(() => {
-            this.messageService.createMessage({
-              chatId,
-              message: result,
-              senderId: null,
-              role: SocketRoles.AI_ASSISTANT,
-            });
+            if (typeof result === 'string') {
+              this.messageService.createMessage({
+                chatId,
+                message: result,
+                senderId: null,
+                role: SocketRoles.AI_ASSISTANT,
+              });
+            } else if(typeof result !== 'string') {
+              this.messageService.createMessage({
+                chatId,
+                message: `I can't anwer to your quession`,
+                senderId: null,
+                role: SocketRoles.AI_ASSISTANT,
+              });
+            }
           });
       }
       return result;

@@ -52,7 +52,7 @@ export class MessageService {
       }
     }
 
-    if (!messages.length) throw new Error('Messages not found');
+    if (!messages.length) return [];
 
     return filteredMessages;
   }

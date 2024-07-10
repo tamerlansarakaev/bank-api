@@ -20,7 +20,7 @@ class ChatManager {
 
   async sendMessage(userId: number, message) {
     const session = this.sessions.get(userId);
-    if (!session) throw new Error(`No active session for user ${userId}`);
+    if (!session) throw new Error(`No active session`);
 
     return session.sendMessage(message);
   }
