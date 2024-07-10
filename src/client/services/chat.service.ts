@@ -47,17 +47,7 @@ export class ChatService {
   }
   А;
 
-  async connect(userId: number) {
-    try {
-      const user = await this.userService.getProfile(userId);
-      if (!user) return;
 
-      await chatManager.getOrCreateSession(user);
-      return user.id;
-    } catch (error) {
-      return error;
-    }
-  }
 
   async getChatMessages({ chatId, messagesId }) {
     try {

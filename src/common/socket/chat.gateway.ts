@@ -24,6 +24,7 @@ import { validateEntityData } from '../utils/errorValidate';
 @UseGuards(WsAuthGuard)
 export class ChatGateway {
   constructor(private chatService: ChatService) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -48,7 +49,6 @@ export class ChatGateway {
       const userId = client.userId;
       const createdChat = await this.chatService.createChat(userId);
       await this.handleJoinRoom(client, { chatId: createdChat.id });
-      await this.handleGetChats(client);
     } catch (error) {
       client.emit('error', new WsException(error));
     }
@@ -57,27 +57,27 @@ export class ChatGateway {
   @SubscribeMessage('join')
   async handleJoinRoom(
     @ConnectedSocket() client: CustomSocket,
-    @MessageBody() { chatId },
+    @MessageBody() { chatId }: { chatId: number },
   ) {
     try {
-      const userId = client.userId;
-      await this.chatService.validateChat(userId, chatId);
-      const chat = await this.chatService.getChatById(chatId, userId);
       if (!chatId) {
         return client.emit(
           'error',
           'chatId field is important for join to chat',
         );
       }
-      await this.chatService.connect(userId);
-      client.join(chatId);
+
+      const userId = client.userId;
+      await this.chatService.validateChat(userId, chatId);
+      const chat = await this.chatService.getChatById(chatId, userId);
+      client.join(String(chatId));
 
       const messages = await this.chatService.getChatMessages({
         chatId,
         messagesId: chat.messages,
       });
 
-      return client.emit('joined', {
+      client.emit('joined', {
         chatId,
         createdAt: chat.createdAt,
         userId,
@@ -95,24 +95,19 @@ export class ChatGateway {
   ) {
     try {
       const userId = client.userId;
-      const chat = await this.chatService.getChatById(
-        Number(data.room),
-        userId,
-      );
+      const chatId = Number(data.room);
+      const chat = await this.chatService.getChatById(chatId, userId);
+
       if (!chat) return;
 
-      const validate = await this.chatService.validateChat(
-        userId,
-        Number(data.room),
-      );
-      if (validate) {
-        client.join(data.room);
-      }
-      const validateAccess = client.rooms.has(data.room);
-      if (!validateAccess)
+      await this.chatService.validateChat(userId, chatId);
+      client.join(data.room);
+
+      if (!client.rooms.has(data.room)) {
         throw new WsException(
-          `You doesn't have access to send message to chat: ${data.room}`,
+          `You don't have access to send messages to chat: ${data.room}`,
         );
+      }
 
       const userMessageData = {
         message: data.message,
@@ -121,37 +116,31 @@ export class ChatGateway {
         role: SocketRoles.CLIENT,
       };
 
-      const updatedUserMessageData = {
-        chatId: Number(userMessageData.room),
+      const userMessage = new Message();
+      Object.assign(userMessage, {
+        chatId,
         senderId: userMessageData.userId,
         message: userMessageData.message,
-      };
+      });
 
-      const userMessage = new Message();
-
-      Object.assign(userMessage, { ...updatedUserMessageData });
       this.server.to(data.room).emit('roomMessage', userMessageData);
-      const validateUserMessage = await validateEntityData(userMessage);
 
+      const validateUserMessage = await validateEntityData(userMessage);
       if (validateUserMessage) {
         throw new WsException({ validateUserMessage });
       }
 
-      const aiMessage = await this.chatService
-        .handleSendMessage({
-          userId,
-          message: data.message,
-          chatId: data.room,
-        })
-        .catch((err) => {
-          throw new WsException(err);
-        });
+      const aiMessage = await this.chatService.handleSendMessage({
+        userId,
+        message: data.message,
+        chatId: data.room,
+      });
+
       this.server.to(data.room).emit('aiMessage', {
         role: SocketRoles.AI_ASSISTANT,
         message: aiMessage,
         room: data.room,
       });
-      return;
     } catch (error) {
       client.emit('error', new WsException(error));
     }
@@ -160,23 +149,14 @@ export class ChatGateway {
   @SubscribeMessage('delete')
   async handleLeaveRoom(
     @ConnectedSocket() client: CustomSocket,
-    @MessageBody() room,
+    @MessageBody() { room }: { room: string },
   ) {
     try {
       const userId = client.userId;
-      await this.chatService.deleteChat(userId, room);
+      await this.chatService.deleteChat(userId, Number(room));
       client.leave(room);
-      await this.handleGetChats(client);
     } catch (error) {
       client.emit('error', new WsException(error));
     }
-  }
-
-  @SubscribeMessage('all-chats')
-  async handleGetChats(@ConnectedSocket() client: CustomSocket) {
-    const userId = client.userId;
-    if (!userId) throw new WsException(`Unauthorized`);
-    const chatList = await this.chatService.getAllChats(userId);
-    client.emit('all-chats', chatList);
   }
 }
