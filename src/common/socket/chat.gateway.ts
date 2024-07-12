@@ -56,7 +56,10 @@ export class ChatGateway {
     try {
       const userId = client.userId;
       const createdChat = await this.chatService.createChat(userId);
-      await this.handleJoinRoom(client, { chatId: createdChat.id });
+      await this.handleJoinRoom(client, {
+        chatId: createdChat.id,
+        cache: false,
+      });
     } catch (error) {
       if (error === errorMessages.USER_NOT_FOUND) {
         client.disconnect(true);
@@ -68,7 +71,7 @@ export class ChatGateway {
   @SubscribeMessage('join')
   async handleJoinRoom(
     @ConnectedSocket() client: CustomSocket,
-    @MessageBody() { chatId }: { chatId: number },
+    @MessageBody() { chatId, cache }: { chatId: number; cache?: boolean },
   ) {
     try {
       if (!chatId) {
@@ -83,7 +86,7 @@ export class ChatGateway {
       const cacheKey = cacheHelper.chatKey(chatId);
       const cachedChat: IChat = await this.cacheManager.get(cacheKey);
 
-      if (cacheKey && cachedChat) {
+      if (cacheKey && cachedChat && cache) {
         return client.emit('joined', {
           chatId,
           createdAt: cachedChat.createdAt,
