@@ -36,5 +36,6 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
             cd first-bank-backend
+            docker-compose down
             docker pull tima011104/first-bank-backend:latest
             docker-compose up -d
