@@ -64,7 +64,7 @@ export class AuthController {
   @Public()
   @UseGuards(RefreshTokenGuard)
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Return refresh token' })
+  @ApiResponse({ status: 200, description: 'Return Updated tokens' })
   @ApiResponse({ status: 401, description: 'Refresh token invalid' })
   @Get('refresh')
   async refreshToken(@Req() req, @Res() res) {
