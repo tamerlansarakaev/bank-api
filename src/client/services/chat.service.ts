@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ClientUserService } from './user.service';
 import { JwtService } from '@nestjs/jwt';
-import { jwtConstants } from 'src/common/constants';
+import { errorMessages, jwtConstants } from 'src/common/constants';
 import chatManager from 'src/common/ai/chat.manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from 'src/common/entities/chat.entity';
@@ -80,7 +80,8 @@ export class ChatService {
                 senderId: null,
                 role: SocketRoles.AI_ASSISTANT,
               });
-            } else if(typeof result !== 'string') {
+            }
+            if (typeof result !== 'string') {
               this.messageService.createMessage({
                 chatId,
                 message: `I can't anwer to your quession`,
@@ -108,7 +109,7 @@ export class ChatService {
 
   async createChat(userId: number): Promise<Chat> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error(errorMessages.USER_NOT_FOUND);
     const chat = new Chat();
     chat.creatorId = userId;
     const createdChat = await this.chatRepository.save(chat);
@@ -119,10 +120,9 @@ export class ChatService {
   }
 
   async validateChat(userId: number, chatId: number) {
-    const chat = await this.chatRepository.find({
-      where: { id: chatId, creatorId: userId },
+    const chat = await this.chatRepository.findOne({
+      where: { id: Number(chatId), creatorId: Number(userId) },
     });
-
     if (!chat) {
       throw new Error('Chat not found');
     }
@@ -145,14 +145,18 @@ export class ChatService {
   }
 
   async getChatById(chatId: number, userId: number) {
-    const chat = await this.chatRepository.findOne({
-      where: { id: chatId, creatorId: userId },
-    });
+    try {
+      const chat = await this.chatRepository.findOne({
+        where: { id: chatId, creatorId: userId },
+      });
 
-    if (chat) {
-      return chat;
-    } else {
-      throw new Error('Chat not found');
+      if (chat) {
+        return chat;
+      } else {
+        throw new Error('Chat not found');
+      }
+    } catch (error) {
+      return error;
     }
   }
 }
