@@ -45,10 +45,13 @@ export class MessageService {
 
     const filteredMessages = [];
 
-    for (const messagesList of messages) {
-      const validate = messagesId.includes(messagesList.id);
-      if (validate) {
-        filteredMessages.push(messagesList);
+    if (!messagesId) return [];
+    for (const message of messages) {
+      if (message) {
+        const validate = messagesId.includes(message.id);
+        if (validate) {
+          filteredMessages.push(message);
+        }
       }
     }
 

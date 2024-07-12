@@ -37,6 +37,8 @@ export class AuthService {
     email,
     pass,
   }): Promise<{ access_token: string; refresh_token: string }> {
+    if (!pass)
+      throw new BadRequestException({ message: `The Password field can't be empty` });
     try {
       const user = await this.userService.getUserByEmail(email);
       if (!user)

@@ -16,8 +16,8 @@ import { validateEntityData } from '../utils/errorValidate';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { cacheHelper } from '../utils/cache';
-import { Chat } from '../entities/chat.entity';
 import { IChat } from '../interfaces/chat';
+import { errorMessages } from '../constants';
 
 @WebSocketGateway({
   cors: {
@@ -58,6 +58,9 @@ export class ChatGateway {
       const createdChat = await this.chatService.createChat(userId);
       await this.handleJoinRoom(client, { chatId: createdChat.id });
     } catch (error) {
+      if (error === errorMessages.USER_NOT_FOUND) {
+        client.disconnect(true);
+      }
       client.emit('error', new WsException(error));
     }
   }
@@ -80,7 +83,7 @@ export class ChatGateway {
       const cacheKey = cacheHelper.chatKey(chatId);
       const cachedChat: IChat = await this.cacheManager.get(cacheKey);
 
-      if (cachedChat) {
+      if (cacheKey && cachedChat) {
         return client.emit('joined', {
           chatId,
           createdAt: cachedChat.createdAt,
@@ -99,7 +102,7 @@ export class ChatGateway {
 
       await this.cacheManager.set(cacheKey, cacheData);
 
-      client.emit('joined', {
+      return client.emit('joined', {
         chatId,
         createdAt: chat.createdAt,
         userId,
