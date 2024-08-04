@@ -6,7 +6,7 @@ export const jwtConstants = {
 };
 
 export const configHash = {
-  hashSalt: 15,
+  hashSalt: 12,
 };
 
 export enum errorMessages {

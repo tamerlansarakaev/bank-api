@@ -31,8 +31,7 @@ export class ChatService {
     if (!userId) throw new Error('UserId is required');
     const user = await this.userService.getProfile(userId);
     if (!user) throw new NotFoundException(`User with id: ${userId} not found`);
-    const { password, ...userWithoutPassword } = user;
-    return { ...userWithoutPassword, password: '*'.repeat(password.length) };
+    return { user, password: '*******' };
   }
 
   async validateJWT(token: string): Promise<any> {
@@ -145,12 +144,16 @@ export class ChatService {
 
   async deleteChat(userId: number, chatId: number) {
     const isValid = await this.validateChat(userId, chatId);
-    if (!isValid) throw new NotFoundException('You do not own this chat');
+
+    if (!isValid) {
+      throw new NotFoundException('You do not own this chat');
+    }
+    await this.chatRepository.delete(chatId);
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
-
-    await this.chatRepository.delete(chatId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
     user.chatList = user.chatList.filter((id) => id !== chatId);
     await this.userRepository.save(user);
@@ -163,7 +166,9 @@ export class ChatService {
       where: { id: chatId, creatorId: userId },
     });
 
-    if (!chat) throw new NotFoundException('Chat not found');
+    if (!chat) {
+      throw new NotFoundException('Chat not found');
+    }
 
     return chat;
   }
