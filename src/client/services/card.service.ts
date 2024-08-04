@@ -34,13 +34,13 @@ export class ClientCardService {
     private transactionService: ClientTransactionService,
   ) {}
 
-  generateRandomNumber(length) {
+  generateRandomNumber(length: number): number {
     let min = Math.pow(10, length - 1);
     let max = Math.pow(10, length) - 1;
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  async generateCardNumber() {
+  async generateCardNumber(): Promise<string> {
     const cardNumber = this.generateRandomNumber(16).toString();
     const validate = await this.cardRepository.find({
       where: { cardNumber },
@@ -54,7 +54,7 @@ export class ClientCardService {
   async addCard({ userId, name, surname }: ICreateCard): Promise<Card> {
     let currentDate = new Date();
     currentDate.setFullYear(currentDate.getFullYear() + 5);
-    const cardNumber = await this.generateCardNumber()
+    const cardNumber = await this.generateCardNumber();
     const cardData: CreateCardDTO = {
       name,
       surname,
@@ -77,7 +77,7 @@ export class ClientCardService {
     return await this.cardRepository.save(card);
   }
 
-  async getCardsByCardId(cardsId: Array<number>) {
+  async getCardsByCardId(cardsId: Array<number>): Promise<Card[] | null> {
     const cardList: Array<Card> = [];
     if (!cardsId) {
       return null;
@@ -93,7 +93,7 @@ export class ClientCardService {
     return cardList;
   }
 
-  async getCard({ id, userId }) {
+  async getCard({ id, userId }): Promise<Card> {
     const cacheCard: Card = await this.cacheManager.get(
       cacheHelper.cardKey(id),
     );
@@ -109,11 +109,11 @@ export class ClientCardService {
       await this.cacheManager.set(cacheHelper.cardKey(card.id), card);
       return card;
     } else {
-      throw new Error('its not your card');
+      throw new Error(`It's not your card`);
     }
   }
 
-  async getCardTransactions(cardId: number) {
+  async getCardTransactions(cardId: number): Promise<Transaction[]> {
     const card = await this.cardRepository.findOne({ where: { id: cardId } });
     if (!card) throw new NotFoundException({ message: 'Card not found' });
     const transactions = card.transactions;
@@ -145,7 +145,7 @@ export class ClientCardService {
     return card || null;
   }
 
-  async verifyCard({ userId, cardId }) {
+  async verifyCard({ userId, cardId }): Promise<Card> {
     const card = await this.getCard({ id: cardId, userId });
 
     if (!card || card.status === CardStatus.BLOCKED)
@@ -162,7 +162,7 @@ export class ClientCardService {
     senderCardId,
     receiverCardNumber,
     currency,
-  }: ISendData) {
+  }: ISendData): Promise<Transaction> {
     if (!senderCardId)
       throw new BadRequestException({ message: "SenderCardId can't be empty" });
 
@@ -176,7 +176,7 @@ export class ClientCardService {
     if (!receiverCard)
       throw new NotFoundException({ message: 'Receiver Card not found' });
     if (senderCard.balance - amount < 0)
-      throw new Error('Not enought money on card');
+      throw new Error('Not enough money on card');
 
     const currenciesValidate = this.validateCurrency([
       senderCard.currency,
@@ -185,7 +185,7 @@ export class ClientCardService {
 
     if (!currenciesValidate)
       throw new BadRequestException({
-        message: 'Card currencies are different ',
+        message: 'Card currencies are different',
       });
 
     senderCard.balance = senderCard.balance - amount;
@@ -207,7 +207,7 @@ export class ClientCardService {
     return transaction;
   }
 
-  async confirmSendTransaction(transaction: Transaction) {
+  async confirmSendTransaction(transaction: Transaction): Promise<void> {
     const randomTimeForTimeout = Math.floor(
       Math.random() * (10000 - 5000) + 5000,
     );
@@ -224,11 +224,10 @@ export class ClientCardService {
 
       await this.cardRepository.save(receiverCard);
       await this.cacheManager.del(cacheHelper.cardKey(receiverCard.id));
-      return;
     }, randomTimeForTimeout);
   }
 
-  async validateCurrency(currency: Currency[]) {
+  async validateCurrency(currency: Currency[]): Promise<boolean> {
     let status = true;
     currency.map((el, i) => {
       if (el !== currency[i]) {
@@ -238,7 +237,7 @@ export class ClientCardService {
     return status;
   }
 
-  async deposit({ userId, cardId, amount, currency }: IDepositData) {
+  async deposit({ userId, cardId, amount, currency }: IDepositData): Promise<Transaction> {
     const card = await this.verifyCard({ cardId, userId });
     const validateCurrency = await this.validateCurrency([
       currency,

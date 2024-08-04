@@ -14,12 +14,12 @@ import { jwtConstants } from 'src/common/constants';
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: ClientUserService,
-    private jwtService: JwtService,
+    private readonly userService: ClientUserService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async getTokens(id: number, email: string) {
-    const [at, rt] = await Promise.all([
+    const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync({ id, email }, { secret: jwtConstants.secret }),
       this.jwtService.signAsync(
         { id, email },
@@ -28,26 +28,32 @@ export class AuthService {
     ]);
 
     return {
-      access_token: at,
-      refresh_token: rt,
+      access_token: accessToken,
+      refresh_token: refreshToken,
     };
   }
 
   async signIn({
     email,
     pass,
+  }: {
+    email: string;
+    pass: string;
   }): Promise<{ access_token: string; refresh_token: string }> {
-    if (!pass)
+    if (!pass) {
       throw new BadRequestException({ message: `The Password field can't be empty` });
+    }
+
     try {
       const user = await this.userService.getUserByEmail(email);
-      if (!user)
+      if (!user) {
         throw new NotFoundException({
           message: `User with Email: ${email} not found`,
         });
+      }
 
-      const comparePassword = await bcryptjs.compare(pass, user.password);
-      if (!comparePassword) {
+      const isPasswordValid = await bcryptjs.compare(pass, user.password);
+      if (!isPasswordValid) {
         throw new UnauthorizedException('Password is incorrect');
       }
 
@@ -57,13 +63,17 @@ export class AuthService {
     }
   }
 
-  async signUp(userData: CreateUserDto): Promise<SignUpDto> | undefined {
+  async signUp(userData: CreateUserDto): Promise<SignUpDto> {
     try {
-      const findUser = await this.userService.getUserByEmail(userData.email);
-      if (findUser) throw new BadRequestException('User already exists');
-      const user = await this.userService.createUser(userData);
-      const tokens = await this.getTokens(user.id, userData.email);
-      return { ...user, ...tokens };
+      const existingUser = await this.userService.getUserByEmail(userData.email);
+      if (existingUser) {
+        throw new BadRequestException('User already exists');
+      }
+
+      const newUser = await this.userService.createUser(userData);
+      const tokens = await this.getTokens(newUser.id, userData.email);
+
+      return { ...newUser, ...tokens };
     } catch (error) {
       throw error;
     }

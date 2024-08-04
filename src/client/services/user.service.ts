@@ -12,19 +12,22 @@ import { Cache } from 'cache-manager';
 import { cacheHelper } from 'src/common/utils/cache';
 import { Card } from 'src/common/entities/card.entity';
 
-export interface IProfile extends Omit<User, 'cardList'> {
+export interface IProfile extends Omit<User, 'cardList' | 'password'> {
   cardList: Card[];
   balance: number;
 }
+
 @Injectable()
 export class ClientUserService {
   constructor(
-    @InjectRepository(User) private readonly usersRepository: Repository<User>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
     private readonly cardService: ClientCardService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
-  async getUserByEmail(email: string) {
+  async getUserByEmail(email: string): Promise<User | null> {
     try {
       return await this.usersRepository.findOne({ where: { email } });
     } catch (error) {
@@ -32,80 +35,68 @@ export class ClientUserService {
     }
   }
 
-  async createUser(userData: CreateUserDto) {
+  async createUser(userData: CreateUserDto): Promise<User> {
     const { name, email, password, surname } = userData;
-    const user = new User();
     const hashPassword = await bcryptjs.hash(password, configHash.hashSalt);
-    const userObject: CreateUserDto = {
-      email,
-      name,
-      password: hashPassword,
-      surname,
-    };
 
-    Object.assign(user, userObject);
+    const user = new User();
+    Object.assign(user, { email, name, password: hashPassword, surname });
     user.cardList = [];
-    const errors = await validate(user).then((errors) =>
-      errors.map((error) => error.constraints),
-    );
-    if (errors.length) throw new BadRequestException({ errors: errors });
+
+    const errors = await validate(user);
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        errors: errors.map((error) => error.constraints),
+      });
+    }
 
     return await this.usersRepository.save(user);
   }
 
-  async getProfile(id): Promise<IProfile> {
-    const cacheUser: User = await this.cacheManager.get(
+  async getProfile(id: number): Promise<IProfile> {
+    let userProfile = await this.cacheManager.get<User>(
       cacheHelper.userKey(id),
     );
 
-    if (cacheUser) {
-      const cardList = await this.cardService.getCardsByCardId(
-        cacheUser.cardList,
-      );
-      const totalBalance = await this.getBalance(cardList);
-      const errors = await validate(id).then((errors) =>
-        errors.map((error) => error.constraints),
-      );
-      if (errors.length) throw new BadRequestException({ errors: errors });
-      return { ...cacheUser, cardList: cardList, balance: totalBalance };
+    if (!userProfile) {
+      userProfile = await this.usersRepository.findOne({ where: { id } });
+
+      if (!userProfile) {
+        throw new BadRequestException('User not found');
+      }
+
+      await this.cacheManager.set(cacheHelper.userKey(id), userProfile);
     }
 
-    const userProfile = await this.usersRepository.findOne({ where: { id } });
-    await this.cacheManager.set(
-      cacheHelper.userKey(userProfile.id),
-      userProfile,
-    );
+    const { password, ...profile } = userProfile;
 
     const cardList = await this.cardService.getCardsByCardId(
       userProfile.cardList,
     );
     const totalBalance = await this.getBalance(cardList);
 
-    return { ...userProfile, cardList: cardList, balance: totalBalance };
+    return { ...profile, cardList, balance: totalBalance };
   }
 
-  async getBalance(cardList: Card[]) {
-    if (cardList) {
-      const totalBalance = cardList.reduce(
-        (totalBalance, card) => totalBalance + card.balance,
-        0,
-      );
-      return totalBalance;
-    }
-    return 0;
+  async getBalance(cardList: Card[]): Promise<number> {
+    if (!cardList) return 0;
+    return cardList.reduce(
+      (totalBalance, card) => totalBalance + card.balance,
+      0,
+    );
   }
 
-  async getUser(userId: number) {
+  async getUser(userId: number): Promise<User> {
     try {
       const user = await this.usersRepository.findOne({
         where: { id: userId },
       });
-      if (user) {
-        return user;
+      if (!user) {
+        throw new Error('User not found');
       }
-      throw new Error('User not found');
+      return user;
     } catch (error) {
-      return error;
+      throw new BadRequestException(error.message);
     }
   }
 }
