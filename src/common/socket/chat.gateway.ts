@@ -57,7 +57,7 @@ export class ChatGateway {
   async createChat(@ConnectedSocket() client: CustomSocket) {
     try {
       const userId = client.userId;
-      const createdChat = await this.chatService.createChat(userId);
+      const createdChat = await this.chatService.createChat(Number(userId));
       await this.handleJoinRoom(client, {
         chatId: createdChat.id,
         cache: false,

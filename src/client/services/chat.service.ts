@@ -14,6 +14,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/common/entities/user.entity';
 import { MessageService } from './message.service';
 import { SocketRoles } from 'src/common/entities/message.entity';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class ChatService {
@@ -45,18 +46,36 @@ export class ChatService {
     }
   }
 
-  async getChatMessages({ chatId, messagesId }: { chatId: number; messagesId: number[] }) {
+  async getChatMessages({
+    chatId,
+    messagesId,
+  }: {
+    chatId: number;
+    messagesId: number[];
+  }) {
     try {
-      return await this.messageService.getAllMessagesByMessagesId(chatId, messagesId);
+      return await this.messageService.getAllMessagesByMessagesId(
+        chatId,
+        messagesId,
+      );
     } catch (error) {
       throw new Error(`Failed to get chat messages: ${error.message}`);
     }
   }
 
-  async handleSendMessage({ message, userId, chatId }: { message: string; userId: number; chatId: number }): Promise<string> {
+  async handleSendMessage({
+    message,
+    userId,
+    chatId,
+  }: {
+    message: string;
+    userId: number;
+    chatId: number;
+  }): Promise<string> {
     try {
       const user = await this.userService.getProfile(userId);
-      if (!user) throw new NotFoundException(`User with id: ${userId} not found`);
+      if (!user)
+        throw new NotFoundException(`User with id: ${userId} not found`);
 
       const session = await chatManager.getOrCreateSession(user);
       const result: string = await session.sendMessage(message);
@@ -90,25 +109,31 @@ export class ChatService {
   }
 
   async getAllChats(userId: number): Promise<Chat[]> {
-    const chatList = await this.chatRepository.find({ where: { creatorId: userId } });
+    const chatList = await this.chatRepository.find({
+      where: { creatorId: userId },
+    });
     if (!chatList.length) {
-      throw new NotFoundException(`User with id:${userId} doesn't have any chats`);
+      throw new NotFoundException(
+        `User with id:${userId} doesn't have any chats`,
+      );
     }
     return chatList;
   }
 
   async createChat(userId: number): Promise<Chat> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException(errorMessages.USER_NOT_FOUND);
+    try {
+      const user = await this.userService.getUser(userId);
+      const chat = this.chatRepository.create({ creatorId: userId });
+      const createdChat = await this.chatRepository.save(chat);
 
-    const chat = this.chatRepository.create({ creatorId: userId });
-    const createdChat = await this.chatRepository.save(chat);
+      user.chatList = user.chatList || [];
+      user.chatList.push(createdChat.id);
+      await this.userRepository.save(user);
 
-    user.chatList = user.chatList || [];
-    user.chatList.push(createdChat.id);
-    await this.userRepository.save(user);
-
-    return createdChat;
+      return createdChat;
+    } catch (error) {
+      throw new WsException(error.message);
+    }
   }
 
   async validateChat(userId: number, chatId: number): Promise<boolean> {
@@ -126,8 +151,8 @@ export class ChatService {
     if (!user) throw new NotFoundException('User not found');
 
     await this.chatRepository.delete(chatId);
-    
-    user.chatList = user.chatList.filter(id => id !== chatId);
+
+    user.chatList = user.chatList.filter((id) => id !== chatId);
     await this.userRepository.save(user);
 
     return { success: true, message: 'Chat deleted successfully' };
