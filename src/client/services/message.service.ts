@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Chat } from 'src/common/entities/chat.entity';
 import { Message, SocketRoles } from 'src/common/entities/message.entity';
 import { validateEntityData } from 'src/common/utils/errorValidate';
-import { Repository } from 'typeorm';
 
 export interface ISendMessage {
   senderId: number;
@@ -15,57 +15,61 @@ export interface ISendMessage {
 @Injectable()
 export class MessageService {
   constructor(
-    @InjectRepository(Message) private messageRepository: Repository<Message>,
-    @InjectRepository(Chat) private chatRepository: Repository<Chat>,
+    @InjectRepository(Message)
+    private messageRepository: Repository<Message>,
+    @InjectRepository(Chat)
+    private chatRepository: Repository<Chat>,
   ) {}
 
-  async createMessage({ ...data }: ISendMessage) {
-    const newMessage = new Message();
+  async createMessage(data: ISendMessage): Promise<Message> {
     const chat = await this.chatRepository.findOne({
       where: { id: data.chatId },
     });
 
-    Object.assign(newMessage, data);
+    if (!chat) {
+      throw new NotFoundException(`Chat with id ${data.chatId} not found`);
+    }
+
+    const newMessage = this.messageRepository.create(data);
     await validateEntityData(newMessage);
 
-    const message = await this.messageRepository.save(newMessage);
-    chat.messages.push(message.id);
+    const savedMessage = await this.messageRepository.save(newMessage);
+
+    chat.messages.push(savedMessage.id);
     await this.chatRepository.save(chat);
 
-    return message;
+    return savedMessage;
   }
 
   async getAllMessagesByMessagesId(
     chatId: number,
-    messagesId: Array<number>,
+    messagesId: number[],
   ): Promise<Message[]> {
+    if (!messagesId || messagesId.length === 0) {
+      return [];
+    }
+
     const messages = await this.messageRepository.find({
       where: { chatId },
     });
 
-    const filteredMessages = [];
-
-    if (!messagesId) return [];
-    for (const message of messages) {
-      if (message) {
-        const validate = messagesId.includes(message.id);
-        if (validate) {
-          filteredMessages.push(message);
-        }
-      }
+    if (!messages || messages.length === 0) {
+      return [];
     }
 
-    if (!messages.length) return [];
-
-    return filteredMessages;
+    return messages.filter(
+      (message) => message && message.id && messagesId.includes(message.id),
+    );
   }
 
-  async getAllMessageByUserId(userId: number) {
+  async getAllMessageByUserId(userId: number): Promise<Message[]> {
     const messages = await this.messageRepository.find({
       where: { senderId: userId },
     });
 
-    if (!messages.length) throw new Error('Messages not found');
+    if (!messages || messages.length === 0) {
+      throw new NotFoundException(`Messages for user with id ${userId} not found`);
+    }
 
     return messages;
   }

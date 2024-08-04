@@ -14,6 +14,7 @@ import { Repository } from 'typeorm';
 import { User } from 'src/common/entities/user.entity';
 import { MessageService } from './message.service';
 import { SocketRoles } from 'src/common/entities/message.entity';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class ChatService {
@@ -26,137 +27,144 @@ export class ChatService {
     @InjectRepository(User) private userRepository: Repository<User>,
   ) {}
 
-  async getUserProfile(userId) {
-    if (!userId) throw new Error('UserId is important');
+  async getUserProfile(userId: number) {
+    if (!userId) throw new Error('UserId is required');
     const user = await this.userService.getProfile(userId);
-    const password = user.password.replace(/./g, '*');
     if (!user) throw new NotFoundException(`User with id: ${userId} not found`);
-    return { password, ...user };
+    const { password, ...userWithoutPassword } = user;
+    return { ...userWithoutPassword, password: '*'.repeat(password.length) };
   }
 
-  async validateJWT(token: string) {
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: jwtConstants.secret,
-    });
-
-    if (payload) {
+  async validateJWT(token: string): Promise<any> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: jwtConstants.secret,
+      });
       return payload;
-    } else {
+    } catch (error) {
       return false;
     }
   }
-  А;
 
-  async getChatMessages({ chatId, messagesId }) {
+  async getChatMessages({
+    chatId,
+    messagesId,
+  }: {
+    chatId: number;
+    messagesId: number[];
+  }) {
     try {
-      const messages = await this.messageService.getAllMessagesByMessagesId(
+      return await this.messageService.getAllMessagesByMessagesId(
         chatId,
         messagesId,
       );
-      return messages;
     } catch (error) {
-      throw new Error(error.message);
+      throw new Error(`Failed to get chat messages: ${error.message}`);
     }
   }
 
-  async handleSendMessage({ message, userId, chatId }): Promise<string> {
+  async handleSendMessage({
+    message,
+    userId,
+    chatId,
+  }: {
+    message: string;
+    userId: number;
+    chatId: number;
+  }): Promise<string> {
     try {
       const user = await this.userService.getProfile(userId);
-      if (!user) return;
+      if (!user)
+        throw new NotFoundException(`User with id: ${userId} not found`);
+
       const session = await chatManager.getOrCreateSession(user);
       const result: string = await session.sendMessage(message);
-      if (result) {
-        this.messageService
-          .createMessage({
-            chatId,
-            message,
-            senderId: userId,
-          })
-          .then(() => {
-            if (typeof result === 'string') {
-              this.messageService.createMessage({
-                chatId,
-                message: result,
-                senderId: null,
-                role: SocketRoles.AI_ASSISTANT,
-              });
-            }
-            if (typeof result !== 'string') {
-              this.messageService.createMessage({
-                chatId,
-                message: `I can't anwer to your quession`,
-                senderId: null,
-                role: SocketRoles.AI_ASSISTANT,
-              });
-            }
-          });
+
+      await this.messageService.createMessage({
+        chatId,
+        message,
+        senderId: userId,
+      });
+
+      if (typeof result === 'string') {
+        await this.messageService.createMessage({
+          chatId,
+          message: result,
+          senderId: userId,
+          role: SocketRoles.AI_ASSISTANT,
+        });
+      } else {
+        await this.messageService.createMessage({
+          chatId,
+          message: `I can't answer your question`,
+          senderId: null,
+          role: SocketRoles.AI_ASSISTANT,
+        });
       }
+
       return result;
     } catch (error) {
-      return error;
+      throw new Error(`Failed to send message: ${error.message}`);
     }
   }
 
-  async getAllChats(userId: number) {
+  async getAllChats(userId: number): Promise<Chat[]> {
     const chatList = await this.chatRepository.find({
       where: { creatorId: userId },
     });
-    if (!chatList)
-      throw new Error(`User with id:${userId} doens't have chat chats`);
-
+    if (!chatList.length) {
+      throw new NotFoundException(
+        `User with id:${userId} doesn't have any chats`,
+      );
+    }
     return chatList;
   }
 
   async createChat(userId: number): Promise<Chat> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) throw new Error(errorMessages.USER_NOT_FOUND);
-    const chat = new Chat();
-    chat.creatorId = userId;
-    const createdChat = await this.chatRepository.save(chat);
-    user.chatList.push(createdChat.id);
-    await this.userRepository.save(user);
+    try {
+      const user = await this.userService.getUser(userId);
+      const chat = this.chatRepository.create({ creatorId: userId });
+      const createdChat = await this.chatRepository.save(chat);
 
-    return createdChat;
+      user.chatList = user.chatList || [];
+      user.chatList.push(createdChat.id);
+      await this.userRepository.save(user);
+
+      return createdChat;
+    } catch (error) {
+      throw new WsException(error.message);
+    }
   }
 
-  async validateChat(userId: number, chatId: number) {
+  async validateChat(userId: number, chatId: number): Promise<boolean> {
     const chat = await this.chatRepository.findOne({
-      where: { id: Number(chatId), creatorId: Number(userId) },
+      where: { id: chatId, creatorId: userId },
     });
-    if (!chat) {
-      throw new Error('Chat not found');
-    }
-
-    return true;
+    return !!chat;
   }
 
   async deleteChat(userId: number, chatId: number) {
-    const validate = await this.validateChat(userId, chatId);
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!validate) throw new Error('You not own this chat');
-    if (!user) throw new Error('User not found');
+    const isValid = await this.validateChat(userId, chatId);
+    if (!isValid) throw new NotFoundException('You do not own this chat');
 
-    const deletedChat = await this.chatRepository.delete(chatId);
-    const updatedChatList = user.chatList.filter((id) => {
-      return id !== chatId;
-    });
-    await this.userRepository.save({ ...user, chatList: updatedChatList });
-    return deletedChat;
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    await this.chatRepository.delete(chatId);
+
+    user.chatList = user.chatList.filter((id) => id !== chatId);
+    await this.userRepository.save(user);
+
+    return { success: true, message: 'Chat deleted successfully' };
   }
 
-  async getChatById(chatId: number, userId: number) {
-    try {
-      const chat = await this.chatRepository.findOne({
-        where: { id: chatId, creatorId: userId },
-      });
+  async getChatById(chatId: number, userId: number): Promise<Chat> {
+    const chat = await this.chatRepository.findOne({
+      where: { id: chatId, creatorId: userId },
+    });
 
-      if (chat) {
-        return chat;
-      } else {
-        throw new Error('Chat not found');
-      }
-    } catch (error) {
-      return error;
-    }
+    if (!chat) throw new NotFoundException('Chat not found');
+
+    return chat;
   }
 }

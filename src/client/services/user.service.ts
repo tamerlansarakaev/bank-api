@@ -19,7 +19,6 @@ export interface IProfile extends Omit<User, 'cardList'> {
 @Injectable()
 export class ClientUserService {
   constructor(
-
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly cardService: ClientCardService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -94,5 +93,19 @@ export class ClientUserService {
       return totalBalance;
     }
     return 0;
+  }
+
+  async getUser(userId: number) {
+    try {
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
+      if (user) {
+        return user;
+      }
+      throw new Error('User not found');
+    } catch (error) {
+      return error;
+    }
   }
 }
